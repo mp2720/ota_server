@@ -15,7 +15,7 @@ type SHA256DiffersError struct {
 }
 
 func (e SHA256DiffersError) Error() string {
-	return fmt.Sprintf("SHA256 %s (given) != %s (computed)")
+	return fmt.Sprintf("SHA256 %s (given) != %s (computed)", e.given, e.computed)
 }
 
 func (serv *FirmwareService) AddFirmware(info *FirmwareInfo, bytes []byte) error {
