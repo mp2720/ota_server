@@ -8,14 +8,14 @@ import (
 )
 
 type FirmwareInfo struct {
-	id        int64
-	repo_name string
-	commit_id string
-	tag       string
-	built_at  time.Time
-	loaded_at time.Time
-	loaded_by string
-	sha256    string
+	id       int64
+	repoName string
+	commitId string
+	tag      string
+	builtAt  time.Time
+	loadedAt time.Time
+	loadedBy string
+	sha256   string
 }
 
 type DB struct {
@@ -28,12 +28,12 @@ func (db *DB) createFirmwareTable() error {
 	_, err := db.Exec(`
 	CREATE TABLE IF NOT EXISTS firmwares (
 	    id          BIGINT PRIMARY KEY,
-	    repo_name   TEXT NOT NULL,
-	    commit_id   TEXT NOT NULL,
+	    repoName   TEXT NOT NULL,
+	    commitId   TEXT NOT NULL,
 	    tag         TEXT NOT NULL,
-	    built_at    DATETIME NOT NULL,
-	    loaded_at   DATETIME NOT NULL,
-	    loaded_by   TEXT NOT NULL,
+	    builtAt    DATETIME NOT NULL,
+	    loadedAt   DATETIME NOT NULL,
+	    loadedBy   TEXT NOT NULL,
         sha256      TEXT NOT NULL
 	);`)
 
@@ -56,12 +56,12 @@ func NewDB() (*DB, error) {
 func (db *DB) AddFirmwareInfo(info *FirmwareInfo) (int64, error) {
 	stmt, err := db.Prepare(`
     INSERT INTO firmwares (
-        repo_name,
-        commit_id,
+        repoName,
+        commitId,
         tag,
-        built_at,
-        loaded_at,
-        loaded_by,
+        builtAt,
+        loadedAt,
+        loadedBy,
         sha256
     ) VALUES (?, ?, ?, ?, ?, ?, ?)`)
 	if err != nil {
@@ -69,12 +69,12 @@ func (db *DB) AddFirmwareInfo(info *FirmwareInfo) (int64, error) {
 	}
 
 	result, err := stmt.Exec(
-		info.repo_name,
-		info.commit_id,
+		info.repoName,
+		info.commitId,
 		info.tag,
-		info.built_at,
-		info.loaded_at,
-		info.loaded_by,
+		info.builtAt,
+		info.loadedAt,
+		info.loadedBy,
 		info.sha256,
 	)
 	if err != nil {
@@ -88,12 +88,12 @@ func firmwareInfoFromSqlRows(rows *sql.Rows) (*FirmwareInfo, error) {
 	var fi FirmwareInfo
 	if err := rows.Scan(
 		&fi.id,
-		&fi.repo_name,
-		&fi.commit_id,
+		&fi.repoName,
+		&fi.commitId,
 		&fi.tag,
-		&fi.built_at,
-		&fi.loaded_at,
-		&fi.loaded_by,
+		&fi.builtAt,
+		&fi.loadedAt,
+		&fi.loadedBy,
 		&fi.sha256,
 	); err != nil {
 		return nil, err
@@ -103,7 +103,7 @@ func firmwareInfoFromSqlRows(rows *sql.Rows) (*FirmwareInfo, error) {
 }
 
 func (db *DB) GetNewestLoadedFirmware(repo string, tags []string) (*FirmwareInfo, error) {
-	query := "SELECT * FROM firmwares WHERE repo_name = ?"
+	query := "SELECT * FROM firmwares WHERE repoName = ?"
 	values := [](any){repo}
 	if len(tags) > 0 {
 		query += " AND tag IN ("
@@ -114,7 +114,7 @@ func (db *DB) GetNewestLoadedFirmware(repo string, tags []string) (*FirmwareInfo
 		query += "?)"
 		values = append(values, tags[len(tags)-1])
 	}
-	query += " ORDER BY loaded_at DESC LIMIT 1;"
+	query += " ORDER BY loadedAt DESC LIMIT 1;"
 	stmt, err := db.Prepare(query)
 	if err != nil {
 		return nil, err
