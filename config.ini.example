@@ -1,0 +1,8 @@
+storagePath=./storage
+
+[jwt]
+signingKey=<PLACE ACTUAL SECRET KEY HERE!!!>
+
+[firmware]
+encryptionKey=<PLACE ACTUAL SECRET KEY HERE!!!>
+

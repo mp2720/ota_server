@@ -4,11 +4,14 @@ import (
 	"os"
 )
 
-const STORAGE_PATH = "./storage"
-
 func main() {
+	cfg, err := LoadConfig()
+	if err != nil {
+		panic(err)
+	}
+
 	// Create if not exists
-	err := os.MkdirAll(STORAGE_PATH, os.ModePerm)
+	err = os.MkdirAll(cfg.storagePath, os.ModePerm)
 	if err != nil {
 		panic(err)
 	}

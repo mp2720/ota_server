@@ -6,12 +6,16 @@ import (
 	"path/filepath"
 )
 
-func getFirmwareBinaryPath(firmware_id int64) string {
-	return filepath.Join(STORAGE_PATH, fmt.Sprintf("%d.bin", firmware_id))
+type BinariesService struct {
+	cfg *Config
 }
 
-func AddFirmwareBinary(firmware_id int64, bytes []byte) error {
-	f, err := os.Create(getFirmwareBinaryPath(firmware_id))
+func (svc *BinariesService) getFirmwareBinaryPath(firmware_id int64) string {
+	return filepath.Join(svc.cfg.storagePath, fmt.Sprintf("%d.bin", firmware_id))
+}
+
+func (svc *BinariesService) AddFirmwareBinary(firmware_id int64, bytes []byte) error {
+	f, err := os.Create(svc.getFirmwareBinaryPath(firmware_id))
 	if err != nil {
 		return err
 	}
@@ -22,6 +26,7 @@ func AddFirmwareBinary(firmware_id int64, bytes []byte) error {
 	return err
 }
 
-func GetFirmwareBinary(firmware_id int64) ([]byte, error) {
-	return os.ReadFile(getFirmwareBinaryPath(firmware_id))
+func (svc *BinariesService) GetFirmwareBinary(firmware_id int64) ([]byte, error) {
+	return os.ReadFile(svc.getFirmwareBinaryPath(firmware_id))
 }
+

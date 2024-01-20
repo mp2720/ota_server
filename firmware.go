@@ -6,7 +6,8 @@ import (
 )
 
 type FirmwareService struct {
-	db DB
+	db   *DB
+	bins *BinariesService
 }
 
 type SHA256DiffersError struct {
@@ -18,7 +19,8 @@ func (e SHA256DiffersError) Error() string {
 	return fmt.Sprintf("SHA256 %s (given) != %s (computed)", e.given, e.computed)
 }
 
-func (serv *FirmwareService) AddFirmware(info *FirmwareInfo, bytes []byte) error {
+func (svc *FirmwareService) AddFirmware(info *FirmwareInfo, bytes []byte) error {
+	// TODO: AES encryption.
 	h := sha256.New()
 	hash := fmt.Sprintf("%x", h.Sum(bytes))
 	if info.sha256 == "" {
@@ -27,10 +29,19 @@ func (serv *FirmwareService) AddFirmware(info *FirmwareInfo, bytes []byte) error
 		return SHA256DiffersError{given: info.sha256, computed: hash}
 	}
 
-	id, err := serv.db.AddFirmwareInfo(info)
+	id, err := svc.db.AddFirmwareInfo(info)
 	if err != nil {
 		return err
 	}
 
-	return AddFirmwareBinary(id, bytes)
+	return svc.bins.AddFirmwareBinary(id, bytes)
+}
+
+func (serv *FirmwareService) GetNewestFirmware(repo string, tags []string) (*FirmwareInfo, error) {
+	return serv.db.GetNewestFirmwareInfo(repo, tags)
+}
+
+func (serv *FirmwareService) GetFirmwareBinary(firmware_id int64) ([]byte, error) {
+	// TODO: AES encryption.
+	return serv.bins.GetFirmwareBinary(firmware_id)
 }

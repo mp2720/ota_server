@@ -40,8 +40,8 @@ func (db *DB) createFirmwareTable() error {
 	return err
 }
 
-func NewDB() (*DB, error) {
-	path := filepath.Join(STORAGE_PATH, SQLITE_DB_FILENAME)
+func NewDB(cfg *Config) (*DB, error) {
+	path := filepath.Join(cfg.storagePath, SQLITE_DB_FILENAME)
 	_db, err := sql.Open("sqlite3", path)
 	if err != nil {
 		return nil, err
@@ -102,7 +102,7 @@ func firmwareInfoFromSqlRows(rows *sql.Rows) (*FirmwareInfo, error) {
 	return &fi, nil
 }
 
-func (db *DB) GetNewestLoadedFirmware(repo string, tags []string) (*FirmwareInfo, error) {
+func (db *DB) GetNewestFirmwareInfo(repo string, tags []string) (*FirmwareInfo, error) {
 	query := "SELECT * FROM firmwares WHERE repoName = ?"
 	values := [](any){repo}
 	if len(tags) > 0 {
