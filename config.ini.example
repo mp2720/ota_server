@@ -2,8 +2,8 @@ storagePath=./storage
 
 [jwt]
 signingKey=<PLACE ACTUAL SECRET KEY HERE!!!>
+issuer=ota-server
 
 [firmware]
 encryptionKey=<PLACE ACTUAL SECRET KEY HERE!!!>
-issuer=ota-server
 
