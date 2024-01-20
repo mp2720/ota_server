@@ -5,4 +5,5 @@ signingKey=<PLACE ACTUAL SECRET KEY HERE!!!>
 
 [firmware]
 encryptionKey=<PLACE ACTUAL SECRET KEY HERE!!!>
+issuer=ota-server
 
