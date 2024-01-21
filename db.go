@@ -27,14 +27,14 @@ const SQLITE_DB_FILENAME = "storage/firmware.db"
 func (db *DB) createFirmwareTable() error {
 	_, err := db.Exec(`
 	CREATE TABLE IF NOT EXISTS firmwares (
-	    id          BIGINT PRIMARY KEY,
+	    id         BIGINT PRIMARY KEY,
 	    repoName   TEXT NOT NULL,
 	    commitId   TEXT NOT NULL,
-	    tag         TEXT NOT NULL,
+	    tag        TEXT NOT NULL,
 	    builtAt    DATETIME NOT NULL,
 	    loadedAt   DATETIME NOT NULL,
 	    loadedBy   TEXT NOT NULL,
-        sha256      TEXT NOT NULL
+        sha256     TEXT NOT NULL
 	);`)
 
 	return err
