@@ -1,10 +1,11 @@
+# Место хранения прошивок и базы данных с информацией о них.
 storagePath=./storage
+# Для формирования URL в API.
 host=https://localhost:8080
+# Порт указывается отдельно для gin.
+port=:8080
 
 [jwt]
 signingKey=<PLACE ACTUAL SECRET KEY HERE!!!>
 issuer=ota-server
-
-[firmware]
-encryptionKey=<PLACE ACTUAL SECRET KEY HERE!!!>
 

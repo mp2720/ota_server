@@ -298,5 +298,5 @@ func (api *Api) StartServer() error {
 		v1.GET("/bin/:id", api.getBinFile)
 	}
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	return r.Run()
+	return r.Run(api.cfg.port)
 }
