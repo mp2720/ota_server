@@ -25,7 +25,3 @@ func (svc *BinariesService) AddFirmwareBinary(firmware_id int64, bytes []byte) e
 	_, err = f.Write(bytes)
 	return err
 }
-
-// func (svc *BinariesService) GetFirmwareBinary(firmware_id int64) ([]byte, error) {
-// 	return os.ReadFile(svc.GetFirmwareBinaryPath(firmware_id))
-// }

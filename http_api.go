@@ -106,7 +106,7 @@ func (api *Api) auth(c *gin.Context, canBeBoard bool) (*TokenSubject, bool) {
 	return subject, true
 }
 
-// getNewestFirmware godoc
+// getLatestFirmware godoc
 //
 //	@Summary	Get latest firmware version
 //	@Schemes
@@ -119,7 +119,7 @@ func (api *Api) auth(c *gin.Context, canBeBoard bool) (*TokenSubject, bool) {
 //	@Failure		404		{object}	HttpError			"firmware for given repo and tags not found"
 //	@Security		ApiKeyAuth
 //	@Router			/firmwares/latest [get]
-func (api *Api) getNewestFirmware(c *gin.Context) {
+func (api *Api) getLatestFirmware(c *gin.Context) {
 	_, ok := api.auth(c, true)
 	if !ok {
 		return
@@ -134,7 +134,7 @@ func (api *Api) getNewestFirmware(c *gin.Context) {
 
 	fmt.Printf("repo=%s tags=%+v\n", repoName, tags)
 
-	fi, err := api.firmwareSvc.GetNewestFirmware(repoName, tags)
+	fi, err := api.firmwareSvc.GetLatestFirmware(repoName, tags)
 	if err != nil {
 		panic(err)
 	}
@@ -167,7 +167,7 @@ func (api *Api) getAllFirmwares(c *gin.Context) {
 		return
 	}
 
-	fis, err := api.firmwareSvc.GetFirmwaresInfo()
+	fis, err := api.firmwareSvc.GetAllFirmwaresInfo()
 	if err != nil {
 		panic(err)
 	}
@@ -245,7 +245,7 @@ func (api *Api) addFirmware(c *gin.Context) {
 	c.JSON(http.StatusCreated, api.newFirmwareResponse(addedInfo))
 }
 
-// getBinFile godoc
+// getFirmwareBinary godoc
 //
 //	@Summary	Get binary file
 //	@Schemes
@@ -257,7 +257,7 @@ func (api *Api) addFirmware(c *gin.Context) {
 //	@Failure		404	{object}	HttpError	"firmware for given repo and tags not found"
 //	@Security		ApiKeyAuth
 //	@Router			/bin/{id} [get]
-func (api *Api) getBinFile(c *gin.Context) {
+func (api *Api) getFirmwareBinary(c *gin.Context) {
 	_, ok := api.auth(c, true)
 	if !ok {
 		return
@@ -292,10 +292,10 @@ func (api *Api) StartServer() error {
 	r := gin.Default()
 	v1 := r.Group("/api/v1")
 	{
-		v1.GET("/firmwares/latest", api.getNewestFirmware)
+		v1.GET("/firmwares/latest", api.getLatestFirmware)
 		v1.GET("/firmwares", api.getAllFirmwares)
 		v1.POST("/firmwares", api.addFirmware)
-		v1.GET("/bin/:id", api.getBinFile)
+		v1.GET("/bin/:id", api.getFirmwareBinary)
 	}
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	return r.Run(api.cfg.port)

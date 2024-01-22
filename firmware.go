@@ -43,8 +43,8 @@ func (svc *FirmwareService) AddFirmware(info *FirmwareInfo, bytes []byte) (*Firm
 	return addedInfo, nil
 }
 
-func (serv *FirmwareService) GetNewestFirmware(repo string, tags []string) (*FirmwareInfo, error) {
-	return serv.db.GetNewestFirmwareInfo(repo, tags)
+func (serv *FirmwareService) GetLatestFirmware(repo string, tags []string) (*FirmwareInfo, error) {
+	return serv.db.GetLatestFirmwareInfo(repo, tags)
 }
 
 func (serv *FirmwareService) GetFirmwareBinaryPath(firmwareId int64) (string, error) {
@@ -60,6 +60,6 @@ func (serv *FirmwareService) GetFirmwareBinaryPath(firmwareId int64) (string, er
 	return serv.bins.GetFirmwareBinaryPath(firmwareId), nil
 }
 
-func (serv *FirmwareService) GetFirmwaresInfo() ([]FirmwareInfo, error) {
-	return serv.db.GetAllFirmwares()
+func (serv *FirmwareService) GetAllFirmwaresInfo() ([]FirmwareInfo, error) {
+	return serv.db.GetAllFirmwaresInfo()
 }
