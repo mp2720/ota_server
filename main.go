@@ -31,7 +31,6 @@ func main() {
 		}
 		api := Api{
 			&firmwareSvc,
-			&binSvc,
             &tokenSvc,
 			cfg,
 		}

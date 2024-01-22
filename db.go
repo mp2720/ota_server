@@ -166,6 +166,28 @@ func (db *DB) GetNewestFirmwareInfo(repo string, tags []string) (*FirmwareInfo, 
 	return firmwareInfoFromSqlRows(rows)
 }
 
+func (db *DB) GetFirmareInfoById(id int64) (*FirmwareInfo, error) {
+	stmt, err := db.Prepare("SELECT * FROM firmwares WHERE id=?")
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := stmt.Query(id)
+	if err != nil {
+		return nil, err
+	}
+
+	var fi *FirmwareInfo = nil
+	if rows.Next() {
+		fi, err = firmwareInfoFromSqlRows(rows)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return fi, nil
+}
+
 func (db *DB) GetAllFirmwares() ([]FirmwareInfo, error) {
 	stmt, err := db.Prepare("SELECT * FROM firmwares;")
 	if err != nil {

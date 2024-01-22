@@ -27,7 +27,6 @@ import (
 
 type Api struct {
 	firmwareSvc *FirmwareService
-	binSvc      *BinariesService
 	tokenSvc    *TokenService
 	cfg         *Config
 }
@@ -239,6 +238,7 @@ func (api *Api) addFirmware(c *gin.Context) {
 //	@Success		200	{file}		file
 //	@Failure		401	{object}	HttpError	"Invalid auth token"
 //	@Failure		403	{object}	HttpError	"Access is denied"
+//	@Failure		404	{object}	HttpError	"firmware for given repo and tags not found"
 //	@Security		ApiKeyAuth
 //	@Router			/bin/{id} [get]
 func (api *Api) getBinFile(c *gin.Context) {
@@ -256,7 +256,20 @@ func (api *Api) getBinFile(c *gin.Context) {
 		})
 		return
 	}
-	c.File(api.binSvc.GetFirmwareBinaryPath(id))
+
+    path, err := api.firmwareSvc.GetFirmwareBinaryPath(id)
+    if err != nil {
+        panic(err)
+    }
+
+    if path == "" {
+        c.JSON(http.StatusNotFound, HttpError{
+            http.StatusNotFound,
+            "firmware not found",
+        })
+    }
+
+	c.File(path)
 }
 
 func (api *Api) StartServer() error {

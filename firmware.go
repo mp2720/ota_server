@@ -47,10 +47,18 @@ func (serv *FirmwareService) GetNewestFirmware(repo string, tags []string) (*Fir
 	return serv.db.GetNewestFirmwareInfo(repo, tags)
 }
 
-// func (serv *FirmwareService) GetFirmwareBinary(firmware_id int64) ([]byte, error) {
-// 	// TODO: AES encryption.
-// 	return serv.bins.GetFirmwareBinary(firmware_id)
-// }
+func (serv *FirmwareService) GetFirmwareBinaryPath(firmwareId int64) (string, error) {
+	fi, err := serv.db.GetFirmareInfoById(firmwareId)
+	if err != nil {
+		return "", err
+	}
+
+	if fi == nil {
+		return "", nil
+	}
+
+	return serv.bins.GetFirmwareBinaryPath(firmwareId), nil
+}
 
 func (serv *FirmwareService) GetFirmwaresInfo() ([]FirmwareInfo, error) {
 	return serv.db.GetAllFirmwares()

@@ -51,6 +51,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/main.HttpError"
                         }
+                    },
+                    "404": {
+                        "description": "firmware for given repo and tags not found",
+                        "schema": {
+                            "$ref": "#/definitions/main.HttpError"
+                        }
                     }
                 }
             }
