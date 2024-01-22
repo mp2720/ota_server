@@ -60,21 +60,10 @@ definitions:
       message:
         type: string
     type: object
-externalDocs:
-  description: OpenAPI
-  url: https://swagger.io/resources/open-api/
 host: localhost:8080
 info:
-  contact:
-    email: support@swagger.io
-    name: API Support
-    url: http://www.swagger.io/support
-  description: This is a sample server celler server.
-  license:
-    name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
-  termsOfService: http://swagger.io/terms/
-  title: Swagger Example API
+  contact: {}
+  title: OTA server
   version: "1.0"
 paths:
   /bin/{id}:
@@ -91,6 +80,16 @@ paths:
           description: OK
           schema:
             type: file
+        "401":
+          description: Invalid auth token
+          schema:
+            $ref: '#/definitions/main.HttpError'
+        "403":
+          description: Access is denied
+          schema:
+            $ref: '#/definitions/main.HttpError'
+      security:
+      - ApiKeyAuth: []
       summary: Get binary file
   /firmwares:
     get:
@@ -104,6 +103,16 @@ paths:
             items:
               $ref: '#/definitions/main.ApiFirmwareResponse'
             type: array
+        "401":
+          description: Invalid auth token
+          schema:
+            $ref: '#/definitions/main.HttpError'
+        "403":
+          description: Access is denied
+          schema:
+            $ref: '#/definitions/main.HttpError'
+      security:
+      - ApiKeyAuth: []
       summary: Get all firmwares
     post:
       consumes:
@@ -123,10 +132,21 @@ paths:
           description: ok
           schema:
             $ref: '#/definitions/main.ApiFirmwareResponse'
+        "401":
+          description: Invalid auth token
+          schema:
+            $ref: '#/definitions/main.HttpError'
+        "403":
+          description: Access is denied
+          schema:
+            $ref: '#/definitions/main.HttpError'
+      security:
+      - ApiKeyAuth: []
       summary: Add firmware information and binary
   /firmwares/latest:
     get:
-      description: Get latest firmware version for given repo and tags
+      description: Get latest firmware version for given repo and tags. Available
+        for boards.
       parameters:
       - description: name of firmware's repo
         in: query
@@ -143,9 +163,20 @@ paths:
           description: ok
           schema:
             $ref: '#/definitions/main.ApiFirmwareResponse'
+        "401":
+          description: Invalid auth token
+          schema:
+            $ref: '#/definitions/main.HttpError'
         "404":
           description: firmware for given repo and tags not found
           schema:
             $ref: '#/definitions/main.HttpError'
+      security:
+      - ApiKeyAuth: []
       summary: Get latest firmware version
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: X-Token
+    type: apiKey
 swagger: "2.0"

@@ -74,4 +74,3 @@ func (svc *TokenService) ParseToken(tokenStr string) (*TokenSubject, error) {
 		isBoard: claims["board"].(bool),
 	}, nil
 }
-

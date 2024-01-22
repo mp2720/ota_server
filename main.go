@@ -32,6 +32,7 @@ func main() {
 		api := Api{
 			&firmwareSvc,
 			&binSvc,
+            &tokenSvc,
 			cfg,
 		}
 		if err := api.StartServer(); err != nil {

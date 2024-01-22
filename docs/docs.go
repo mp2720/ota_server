@@ -9,16 +9,7 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "termsOfService": "http://swagger.io/terms/",
-        "contact": {
-            "name": "API Support",
-            "url": "http://www.swagger.io/support",
-            "email": "support@swagger.io"
-        },
-        "license": {
-            "name": "Apache 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
-        },
+        "contact": {},
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
@@ -26,6 +17,11 @@ const docTemplate = `{
     "paths": {
         "/bin/{id}": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Get binary firmware file with given id",
                 "summary": "Get binary file",
                 "parameters": [
@@ -43,12 +39,29 @@ const docTemplate = `{
                         "schema": {
                             "type": "file"
                         }
+                    },
+                    "401": {
+                        "description": "Invalid auth token",
+                        "schema": {
+                            "$ref": "#/definitions/main.HttpError"
+                        }
+                    },
+                    "403": {
+                        "description": "Access is denied",
+                        "schema": {
+                            "$ref": "#/definitions/main.HttpError"
+                        }
                     }
                 }
             }
         },
         "/firmwares": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Get all firmwares",
                 "produces": [
                     "application/json"
@@ -63,10 +76,27 @@ const docTemplate = `{
                                 "$ref": "#/definitions/main.ApiFirmwareResponse"
                             }
                         }
+                    },
+                    "401": {
+                        "description": "Invalid auth token",
+                        "schema": {
+                            "$ref": "#/definitions/main.HttpError"
+                        }
+                    },
+                    "403": {
+                        "description": "Access is denied",
+                        "schema": {
+                            "$ref": "#/definitions/main.HttpError"
+                        }
                     }
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Get all firmwares",
                 "consumes": [
                     "application/json"
@@ -92,13 +122,30 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/main.ApiFirmwareResponse"
                         }
+                    },
+                    "401": {
+                        "description": "Invalid auth token",
+                        "schema": {
+                            "$ref": "#/definitions/main.HttpError"
+                        }
+                    },
+                    "403": {
+                        "description": "Access is denied",
+                        "schema": {
+                            "$ref": "#/definitions/main.HttpError"
+                        }
                     }
                 }
             }
         },
         "/firmwares/latest": {
             "get": {
-                "description": "Get latest firmware version for given repo and tags",
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get latest firmware version for given repo and tags. Available for boards.",
                 "produces": [
                     "application/json"
                 ],
@@ -122,6 +169,12 @@ const docTemplate = `{
                         "description": "ok",
                         "schema": {
                             "$ref": "#/definitions/main.ApiFirmwareResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid auth token",
+                        "schema": {
+                            "$ref": "#/definitions/main.HttpError"
                         }
                     },
                     "404": {
@@ -227,9 +280,12 @@ const docTemplate = `{
             }
         }
     },
-    "externalDocs": {
-        "description": "OpenAPI",
-        "url": "https://swagger.io/resources/open-api/"
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "name": "X-Token",
+            "in": "header"
+        }
     }
 }`
 
@@ -239,8 +295,8 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "localhost:8080",
 	BasePath:         "/api/v1",
 	Schemes:          []string{},
-	Title:            "Swagger Example API",
-	Description:      "This is a sample server celler server.",
+	Title:            "OTA server",
+	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

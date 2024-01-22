@@ -22,7 +22,7 @@ func (e SHA256DiffersError) Error() string {
 func (svc *FirmwareService) AddFirmware(info *FirmwareInfo, bytes []byte) (*FirmwareInfo, error) {
 	// TODO: AES encryption.
 	h := sha256.New()
-    h.Write([]byte(bytes))
+	h.Write([]byte(bytes))
 	hash := fmt.Sprintf("%x", h.Sum(nil))
 	if info.Sha256 == "" {
 		info.Sha256 = hash

@@ -1,18 +1,14 @@
 package main
 
-//	@title			OTA server
-//	@version		1.0
+//	@title		OTA server
+//	@version	1.0
 
 //	@host		localhost:8080
 //	@BasePath	/api/v1
 
-// TODO: implement JWT authentication & authorization.
-
-//	securityDefinitions.basic	BasicAuth
-
-//	@securityDefinitions.bearer	Bearer
-//	@externalDocs.description	OpenAPI
-//	@externalDocs.url			https://swagger.io/resources/open-api/
+//	@securityDefinitions.apikey	ApiKeyAuth
+//	@in							header
+//	@name						X-Token
 
 import (
 	"encoding/base64"
@@ -32,6 +28,7 @@ import (
 type Api struct {
 	firmwareSvc *FirmwareService
 	binSvc      *BinariesService
+	tokenSvc    *TokenService
 	cfg         *Config
 }
 
@@ -85,18 +82,47 @@ func (api *Api) newFirmwareResponse(info *FirmwareInfo) ApiFirmwareResponse {
 	}
 }
 
+func (api *Api) auth(c *gin.Context, canBeBoard bool) (*TokenSubject, bool) {
+	token := c.GetHeader("X-Token")
+	subject, err := api.tokenSvc.ParseToken(token)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, HttpError{
+			http.StatusUnauthorized,
+			err.Error(),
+		})
+		return nil, false
+	}
+
+	if !canBeBoard && subject.isBoard {
+		c.JSON(http.StatusForbidden, HttpError{
+			http.StatusForbidden,
+			"access denied",
+		})
+		return nil, false
+	}
+
+	return subject, true
+}
+
 // getNewestFirmware godoc
 //
 //	@Summary	Get latest firmware version
 //	@Schemes
-//	@Description	Get latest firmware version for given repo and tags
+//	@Description	Get latest firmware version for given repo and tags. Available for boards.
 //	@Produce		json
 //	@Param			repo	query		string				false	"name of firmware's repo"
 //	@Param			tags	query		array				false	"one of tags that firmware should have, can be omitted"
 //	@Success		200		{object}	ApiFirmwareResponse	"ok"
+//	@Failure		401		{object}	HttpError			"Invalid auth token"
 //	@Failure		404		{object}	HttpError			"firmware for given repo and tags not found"
+//	@Security		ApiKeyAuth
 //	@Router			/firmwares/latest [get]
 func (api *Api) getNewestFirmware(c *gin.Context) {
+	_, ok := api.auth(c, true)
+	if !ok {
+		return
+	}
+
 	repoName := c.Query("repo")
 	tagsStr := c.Query("tags")
 	tags := strings.Split(tagsStr, ",")
@@ -128,9 +154,17 @@ func (api *Api) getNewestFirmware(c *gin.Context) {
 //	@Schemes
 //	@Description	Get all firmwares
 //	@Produce		json
-//	@Success		200	{array}	ApiFirmwareResponse	"ok"
+//	@Success		200	{array}		ApiFirmwareResponse	"ok"
+//	@Failure		401	{object}	HttpError			"Invalid auth token"
+//	@Failure		403	{object}	HttpError			"Access is denied"
+//	@Security		ApiKeyAuth
 //	@Router			/firmwares [get]
 func (api *Api) getAllFirmwares(c *gin.Context) {
+	_, ok := api.auth(c, false)
+	if !ok {
+		return
+	}
+
 	fis, err := api.firmwareSvc.GetFirmwaresInfo()
 	if err != nil {
 		panic(err)
@@ -153,8 +187,16 @@ func (api *Api) getAllFirmwares(c *gin.Context) {
 //	@Produce		json
 //	@Param			firmware	body		ApiAddFirmwareRequest	true	"firmware info and binary"
 //	@Success		201			{object}	ApiFirmwareResponse		"ok"
+//	@Failure		401			{object}	HttpError				"Invalid auth token"
+//	@Failure		403			{object}	HttpError				"Access is denied"
+//	@Security		ApiKeyAuth
 //	@Router			/firmwares [post]
 func (api *Api) addFirmware(c *gin.Context) {
+	subject, ok := api.auth(c, false)
+	if !ok {
+		return
+	}
+
 	var json ApiAddFirmwareRequest
 	if err := c.ShouldBindJSON(&json); err != nil {
 		c.JSON(http.StatusBadRequest, HttpError{
@@ -169,7 +211,7 @@ func (api *Api) addFirmware(c *gin.Context) {
 		CommitId: json.Info.CommitId,
 		Tag:      json.Info.Tag,
 		BuiltAt:  time.Unix(json.Info.BuiltAt, 0),
-		LoadedBy: "user",
+		LoadedBy: subject.name,
 		LoadedAt: time.Now(),
 		Sha256:   json.Info.Sha256,
 	}
@@ -193,10 +235,18 @@ func (api *Api) addFirmware(c *gin.Context) {
 //	@Summary	Get binary file
 //	@Schemes
 //	@Description	Get binary firmware file with given id
-//	@Param			id	path	int	true	"firmware's ID"
-//	@Success		200	{file}	file
+//	@Param			id	path		int	true	"firmware's ID"
+//	@Success		200	{file}		file
+//	@Failure		401	{object}	HttpError	"Invalid auth token"
+//	@Failure		403	{object}	HttpError	"Access is denied"
+//	@Security		ApiKeyAuth
 //	@Router			/bin/{id} [get]
 func (api *Api) getBinFile(c *gin.Context) {
+	_, ok := api.auth(c, true)
+	if !ok {
+		return
+	}
+
 	idStr := c.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
