@@ -208,6 +208,9 @@ const docTemplate = `{
                 "commit_id": {
                     "type": "string"
                 },
+                "description": {
+                    "type": "string"
+                },
                 "repo_name": {
                     "type": "string"
                 },
@@ -241,6 +244,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "commit_id": {
+                    "type": "string"
+                },
+                "description": {
                     "type": "string"
                 },
                 "id": {

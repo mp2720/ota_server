@@ -8,14 +8,15 @@ import (
 )
 
 type FirmwareInfo struct {
-	Id       int64
-	RepoName string
-	CommitId string
-	Tag      string
-	BuiltAt  time.Time
-	LoadedAt time.Time
-	LoadedBy string
-	Sha256   string
+	Id          int64
+	RepoName    string
+	CommitId    string
+	Tag         string
+	BuiltAt     time.Time
+	LoadedAt    time.Time
+	LoadedBy    string
+	Sha256      string
+	Description string
 }
 
 type DB struct {
@@ -27,14 +28,15 @@ const SQLITE_DB_FILENAME = "firmware.db"
 func (db *DB) createFirmwareTable() error {
 	_, err := db.Exec(`
 	CREATE TABLE IF NOT EXISTS firmwares (
-	    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-	    repoName   TEXT NOT NULL,
-	    commitId   TEXT NOT NULL,
-	    tag        TEXT NOT NULL,
-	    builtAt    DATETIME NOT NULL,
-	    loadedAt   DATETIME NOT NULL,
-	    loadedBy   TEXT NOT NULL,
-        sha256     TEXT NOT NULL
+	    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+	    repoName    TEXT NOT NULL,
+	    commitId    TEXT NOT NULL,
+	    tag         TEXT NOT NULL,
+	    builtAt     DATETIME NOT NULL,
+	    loadedAt    DATETIME NOT NULL,
+	    loadedBy    TEXT NOT NULL,
+        sha256      TEXT NOT NULL,
+        description TEXT NOT NULL
 	);`)
 
 	return err
@@ -62,8 +64,9 @@ func (db *DB) AddFirmwareInfo(info *FirmwareInfo) (*FirmwareInfo, error) {
         builtAt,
         loadedAt,
         loadedBy,
-        sha256
-    ) VALUES (?, ?, ?, ?, ?, ?, ?)`)
+        sha256,
+        description
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
 	if err != nil {
 		return nil, err
 	}
@@ -76,6 +79,7 @@ func (db *DB) AddFirmwareInfo(info *FirmwareInfo) (*FirmwareInfo, error) {
 		info.LoadedAt,
 		info.LoadedBy,
 		info.Sha256,
+        info.Description,
 	)
 	if err != nil {
 		return nil, err
@@ -101,6 +105,7 @@ func firmwareInfoFromSqlRows(rows *sql.Rows) (*FirmwareInfo, error) {
 		&fi.LoadedAt,
 		&fi.LoadedBy,
 		&fi.Sha256,
+        &fi.Description,
 	); err != nil {
 		return nil, err
 	}

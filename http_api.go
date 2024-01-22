@@ -37,14 +37,15 @@ type HttpError struct {
 }
 
 type ApiFirmwareInfoResponse struct {
-	Id       int64  `json:"id"`
-	RepoName string `json:"repo_name"`
-	CommitId string `json:"commit_id"`
-	Tag      string `json:"tag"`
-	BuiltAt  int64  `json:"built_at"`
-	LoadedAt int64  `json:"loaded_at"`
-	LoadedBy string `json:"loaded_by"`
-	Sha256   string `json:"sha256"`
+	Id          int64  `json:"id"`
+	RepoName    string `json:"repo_name"`
+	CommitId    string `json:"commit_id"`
+	Tag         string `json:"tag"`
+	BuiltAt     int64  `json:"built_at"`
+	LoadedAt    int64  `json:"loaded_at"`
+	LoadedBy    string `json:"loaded_by"`
+	Sha256      string `json:"sha256"`
+	Description string `json:"description"`
 }
 
 type ApiFirmwareResponse struct {
@@ -53,11 +54,12 @@ type ApiFirmwareResponse struct {
 }
 
 type ApiAddFirmwareInfoRequest struct {
-	RepoName string `json:"repo_name" binding:"required"`
-	CommitId string `json:"commit_id" binding:"required"`
-	Tag      string `json:"tag" binding:"alphanum"`
-	BuiltAt  int64  `json:"built_at" binding:"required"`
-	Sha256   string `json:"sha256"`
+	RepoName    string `json:"repo_name" binding:"required"`
+	CommitId    string `json:"commit_id" binding:"required"`
+	Tag         string `json:"tag" binding:"alphanum"`
+	BuiltAt     int64  `json:"built_at" binding:"required"`
+	Sha256      string `json:"sha256"`
+	Description string `json:"description"`
 }
 
 type ApiAddFirmwareRequest struct {
@@ -76,6 +78,7 @@ func (api *Api) newFirmwareResponse(info *FirmwareInfo) ApiFirmwareResponse {
 			info.LoadedAt.Unix(),
 			info.LoadedBy,
 			info.Sha256,
+			info.Description,
 		},
 		fmt.Sprintf("%s/bin/%d", api.cfg.host, info.Id),
 	}
@@ -206,13 +209,14 @@ func (api *Api) addFirmware(c *gin.Context) {
 	}
 
 	info := FirmwareInfo{
-		RepoName: json.Info.RepoName,
-		CommitId: json.Info.CommitId,
-		Tag:      json.Info.Tag,
-		BuiltAt:  time.Unix(json.Info.BuiltAt, 0),
-		LoadedBy: subject.name,
-		LoadedAt: time.Now(),
-		Sha256:   json.Info.Sha256,
+		RepoName:    json.Info.RepoName,
+		CommitId:    json.Info.CommitId,
+		Tag:         json.Info.Tag,
+		BuiltAt:     time.Unix(json.Info.BuiltAt, 0),
+		LoadedBy:    subject.name,
+		LoadedAt:    time.Now(),
+		Sha256:      json.Info.Sha256,
+		Description: json.Info.Description,
 	}
 
 	bytes, err := base64.StdEncoding.DecodeString(json.BinBase64)
@@ -233,7 +237,7 @@ func (api *Api) addFirmware(c *gin.Context) {
 				err.Error(),
 			})
 			return
-        default:
+		default:
 			panic(err)
 		}
 	}
