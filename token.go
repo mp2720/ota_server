@@ -29,7 +29,7 @@ type InvalidTokenClaimsError struct {
 	claim string
 }
 
-func (e InvalidTokenClaimsError) Error() string {
+func (e *InvalidTokenClaimsError) Error() string {
 	return fmt.Sprintf(
 		"Required claim '%s' is missing or invalid in given token",
 		e.claim,
@@ -38,10 +38,10 @@ func (e InvalidTokenClaimsError) Error() string {
 
 func verifyClaimType(claims jwt.MapClaims, key string, typeStr string) error {
 	if _, ok := claims[key]; !ok {
-		return InvalidTokenClaimsError{key}
+		return &InvalidTokenClaimsError{key}
 	}
 	if reflect.TypeOf(claims[key]).String() != typeStr {
-		return InvalidTokenClaimsError{key}
+		return &InvalidTokenClaimsError{key}
 	}
 	return nil
 }

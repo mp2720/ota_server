@@ -225,6 +225,18 @@ func (api *Api) addFirmware(c *gin.Context) {
 	}
 
 	addedInfo, err := api.firmwareSvc.AddFirmware(&info, bytes)
+	if err != nil {
+		switch err.(type) {
+		case *SHA256DiffersError:
+			c.JSON(http.StatusBadRequest, HttpError{
+				http.StatusBadRequest,
+				err.Error(),
+			})
+			return
+        default:
+			panic(err)
+		}
+	}
 
 	c.JSON(http.StatusCreated, api.newFirmwareResponse(addedInfo))
 }
@@ -257,17 +269,17 @@ func (api *Api) getBinFile(c *gin.Context) {
 		return
 	}
 
-    path, err := api.firmwareSvc.GetFirmwareBinaryPath(id)
-    if err != nil {
-        panic(err)
-    }
+	path, err := api.firmwareSvc.GetFirmwareBinaryPath(id)
+	if err != nil {
+		panic(err)
+	}
 
-    if path == "" {
-        c.JSON(http.StatusNotFound, HttpError{
-            http.StatusNotFound,
-            "firmware not found",
-        })
-    }
+	if path == "" {
+		c.JSON(http.StatusNotFound, HttpError{
+			http.StatusNotFound,
+			"firmware not found",
+		})
+	}
 
 	c.File(path)
 }

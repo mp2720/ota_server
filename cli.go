@@ -7,7 +7,7 @@ import (
 
 type CliInvalidUsageError struct{}
 
-func (e CliInvalidUsageError) Error() string {
+func (e *CliInvalidUsageError) Error() string {
 	return fmt.Sprintf("Invalid usage, type %s -h to get help", os.Args[0])
 }
 
@@ -18,11 +18,11 @@ type CliService struct {
 
 func (svc *CliService) ExecuteCliCommands() (string, error) {
 	if len(svc.args) < 3 || len(svc.args) > 4 {
-		return "", CliInvalidUsageError{}
+		return "", &CliInvalidUsageError{}
 	}
 
 	if svc.args[1] != "token" {
-		return "", CliInvalidUsageError{}
+		return "", &CliInvalidUsageError{}
 	}
 
 	var (
@@ -32,7 +32,7 @@ func (svc *CliService) ExecuteCliCommands() (string, error) {
 
 	if len(svc.args) == 4 {
 		if svc.args[3] != "-b" {
-			return "", CliInvalidUsageError{}
+			return "", &CliInvalidUsageError{}
 		}
 
 		isBoard = true

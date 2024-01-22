@@ -37,34 +37,6 @@ func (db *DB) createFirmwareTable() error {
         sha256     TEXT NOT NULL
 	);`)
 
-	// db.AddFirmwareInfo(&FirmwareInfo{
-	// 	RepoName: "repo",
-	// 	CommitId: "148855aa",
-	// 	Tag:      "",
-	// 	BuiltAt:  time.Now(),
-	// 	LoadedAt: time.Now(),
-	// 	LoadedBy: "user",
-	// 	Sha256:   "ШУЕ",
-	// })
-	// db.AddFirmwareInfo(&FirmwareInfo{
-	// 	RepoName: "repo",
-	// 	CommitId: "148855aa",
-	// 	Tag:      "tag",
-	// 	BuiltAt:  time.Now(),
-	// 	LoadedAt: time.Now(),
-	// 	LoadedBy: "user",
-	// 	Sha256:   "ШУЕ",
-	// })
-	// db.AddFirmwareInfo(&FirmwareInfo{
-	// 	RepoName: "repo2",
-	// 	CommitId: "148855aa",
-	// 	Tag:      "tag2",
-	// 	BuiltAt:  time.Now(),
-	// 	LoadedAt: time.Now(),
-	// 	LoadedBy: "user2",
-	// 	Sha256:   "ШУЕ",
-	// })
-
 	return err
 }
 

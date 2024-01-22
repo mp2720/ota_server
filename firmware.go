@@ -15,7 +15,7 @@ type SHA256DiffersError struct {
 	computed string
 }
 
-func (e SHA256DiffersError) Error() string {
+func (e *SHA256DiffersError) Error() string {
 	return fmt.Sprintf("SHA256 %s (given) != %s (computed)", e.given, e.computed)
 }
 
@@ -27,7 +27,7 @@ func (svc *FirmwareService) AddFirmware(info *FirmwareInfo, bytes []byte) (*Firm
 	if info.Sha256 == "" {
 		info.Sha256 = hash
 	} else if hash != info.Sha256 {
-		return nil, SHA256DiffersError{given: info.Sha256, computed: hash}
+		return nil, &SHA256DiffersError{given: info.Sha256, computed: hash}
 	}
 
 	addedInfo, err := svc.db.AddFirmwareInfo(info)
