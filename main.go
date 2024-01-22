@@ -3,9 +3,13 @@ package main
 import (
 	"fmt"
 	"os"
+	"runtime"
 )
 
 func main() {
+    // Not sure that go-sqlite3 is ok with concurrency, so it's better to allow only one thread.
+    runtime.GOMAXPROCS(1)
+
 	cfg, err := LoadConfig()
 	if err != nil {
 		panic(err)
