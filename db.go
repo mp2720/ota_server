@@ -8,26 +8,26 @@ import (
 )
 
 type FirmwareInfo struct {
-	id       int64
-	repoName string
-	commitId string
-	tag      string
-	builtAt  time.Time
-	loadedAt time.Time
-	loadedBy string
-	sha256   string
+	Id       int64
+	RepoName string
+	CommitId string
+	Tag      string
+	BuiltAt  time.Time
+	LoadedAt time.Time
+	LoadedBy string
+	Sha256   string
 }
 
 type DB struct {
 	*sql.DB
 }
 
-const SQLITE_DB_FILENAME = "storage/firmware.db"
+const SQLITE_DB_FILENAME = "firmware.db"
 
 func (db *DB) createFirmwareTable() error {
 	_, err := db.Exec(`
 	CREATE TABLE IF NOT EXISTS firmwares (
-	    id         BIGINT PRIMARY KEY,
+	    id         INTEGER PRIMARY KEY AUTOINCREMENT,
 	    repoName   TEXT NOT NULL,
 	    commitId   TEXT NOT NULL,
 	    tag        TEXT NOT NULL,
@@ -36,6 +36,34 @@ func (db *DB) createFirmwareTable() error {
 	    loadedBy   TEXT NOT NULL,
         sha256     TEXT NOT NULL
 	);`)
+
+	// db.AddFirmwareInfo(&FirmwareInfo{
+	// 	RepoName: "repo",
+	// 	CommitId: "148855aa",
+	// 	Tag:      "",
+	// 	BuiltAt:  time.Now(),
+	// 	LoadedAt: time.Now(),
+	// 	LoadedBy: "user",
+	// 	Sha256:   "ШУЕ",
+	// })
+	// db.AddFirmwareInfo(&FirmwareInfo{
+	// 	RepoName: "repo",
+	// 	CommitId: "148855aa",
+	// 	Tag:      "tag",
+	// 	BuiltAt:  time.Now(),
+	// 	LoadedAt: time.Now(),
+	// 	LoadedBy: "user",
+	// 	Sha256:   "ШУЕ",
+	// })
+	// db.AddFirmwareInfo(&FirmwareInfo{
+	// 	RepoName: "repo2",
+	// 	CommitId: "148855aa",
+	// 	Tag:      "tag2",
+	// 	BuiltAt:  time.Now(),
+	// 	LoadedAt: time.Now(),
+	// 	LoadedBy: "user2",
+	// 	Sha256:   "ШУЕ",
+	// })
 
 	return err
 }
@@ -53,7 +81,7 @@ func NewDB(cfg *Config) (*DB, error) {
 	return db, err
 }
 
-func (db *DB) AddFirmwareInfo(info *FirmwareInfo) (int64, error) {
+func (db *DB) AddFirmwareInfo(info *FirmwareInfo) (*FirmwareInfo, error) {
 	stmt, err := db.Prepare(`
     INSERT INTO firmwares (
         repoName,
@@ -65,36 +93,42 @@ func (db *DB) AddFirmwareInfo(info *FirmwareInfo) (int64, error) {
         sha256
     ) VALUES (?, ?, ?, ?, ?, ?, ?)`)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
 	result, err := stmt.Exec(
-		info.repoName,
-		info.commitId,
-		info.tag,
-		info.builtAt,
-		info.loadedAt,
-		info.loadedBy,
-		info.sha256,
+		info.RepoName,
+		info.CommitId,
+		info.Tag,
+		info.BuiltAt,
+		info.LoadedAt,
+		info.LoadedBy,
+		info.Sha256,
 	)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	return result.LastInsertId()
+	ret := *info
+	ret.Id, err = result.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+
+	return &ret, nil
 }
 
 func firmwareInfoFromSqlRows(rows *sql.Rows) (*FirmwareInfo, error) {
 	var fi FirmwareInfo
 	if err := rows.Scan(
-		&fi.id,
-		&fi.repoName,
-		&fi.commitId,
-		&fi.tag,
-		&fi.builtAt,
-		&fi.loadedAt,
-		&fi.loadedBy,
-		&fi.sha256,
+		&fi.Id,
+		&fi.RepoName,
+		&fi.CommitId,
+		&fi.Tag,
+		&fi.BuiltAt,
+		&fi.LoadedAt,
+		&fi.LoadedBy,
+		&fi.Sha256,
 	); err != nil {
 		return nil, err
 	}

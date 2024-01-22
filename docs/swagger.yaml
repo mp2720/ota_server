@@ -1,0 +1,151 @@
+basePath: /api/v1
+definitions:
+  main.ApiAddFirmwareInfoRequest:
+    properties:
+      built_at:
+        type: integer
+      commit_id:
+        type: string
+      repo_name:
+        type: string
+      sha256:
+        type: string
+      tag:
+        type: string
+    required:
+    - built_at
+    - commit_id
+    - repo_name
+    type: object
+  main.ApiAddFirmwareRequest:
+    properties:
+      bin_base64:
+        type: string
+      info:
+        $ref: '#/definitions/main.ApiAddFirmwareInfoRequest'
+    required:
+    - bin_base64
+    - info
+    type: object
+  main.ApiFirmwareInfoResponse:
+    properties:
+      built_at:
+        type: integer
+      commit_id:
+        type: string
+      id:
+        type: integer
+      loaded_at:
+        type: integer
+      loaded_by:
+        type: string
+      repo_name:
+        type: string
+      sha256:
+        type: string
+      tag:
+        type: string
+    type: object
+  main.ApiFirmwareResponse:
+    properties:
+      bin_url:
+        type: string
+      info:
+        $ref: '#/definitions/main.ApiFirmwareInfoResponse'
+    type: object
+  main.HttpError:
+    properties:
+      code:
+        type: integer
+      message:
+        type: string
+    type: object
+externalDocs:
+  description: OpenAPI
+  url: https://swagger.io/resources/open-api/
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a sample server celler server.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Swagger Example API
+  version: "1.0"
+paths:
+  /bin/{id}:
+    get:
+      description: Get binary firmware file with given id
+      parameters:
+      - description: firmware's ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+      summary: Get binary file
+  /firmwares:
+    get:
+      description: Get all firmwares
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            items:
+              $ref: '#/definitions/main.ApiFirmwareResponse'
+            type: array
+      summary: Get all firmwares
+    post:
+      consumes:
+      - application/json
+      description: Get all firmwares
+      parameters:
+      - description: firmware info and binary
+        in: body
+        name: firmware
+        required: true
+        schema:
+          $ref: '#/definitions/main.ApiAddFirmwareRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: ok
+          schema:
+            $ref: '#/definitions/main.ApiFirmwareResponse'
+      summary: Add firmware information and binary
+  /firmwares/latest:
+    get:
+      description: Get latest firmware version for given repo and tags
+      parameters:
+      - description: name of firmware's repo
+        in: query
+        name: repo
+        type: string
+      - description: one of tags that firmware should have, can be omitted
+        in: query
+        name: tags
+        type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            $ref: '#/definitions/main.ApiFirmwareResponse'
+        "404":
+          description: firmware for given repo and tags not found
+          schema:
+            $ref: '#/definitions/main.HttpError'
+      summary: Get latest firmware version
+swagger: "2.0"

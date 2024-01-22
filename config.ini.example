@@ -1,4 +1,5 @@
 storagePath=./storage
+host=https://localhost:8080
 
 [jwt]
 signingKey=<PLACE ACTUAL SECRET KEY HERE!!!>
