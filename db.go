@@ -125,7 +125,7 @@ func (db *DB) GetNewestFirmwareInfo(repo string, tags []string) (*FirmwareInfo, 
 		query += "?)"
 		values = append(values, tags[len(tags)-1])
 	}
-	query += " ORDER BY loadedAt DESC LIMIT 1;"
+	query += " ORDER BY builtAt DESC LIMIT 1;"
 	stmt, err := db.Prepare(query)
 	if err != nil {
 		return nil, err
