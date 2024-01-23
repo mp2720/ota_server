@@ -46,3 +46,8 @@ go build
 ```
 ./ota_server token %BOARDNAME% -b
 ```
+
+# Swag
+```bash
+swag init -g http_api.go
+```
