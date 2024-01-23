@@ -73,6 +73,7 @@ func (db *DB) AddFirmwareInfo(info *FirmwareInfo) (*FirmwareInfo, error) {
 	if err != nil {
 		return nil, err
 	}
+    defer stmt.Close()
 
 	result, err := stmt.Exec(
 		info.RepoName,
@@ -135,11 +136,13 @@ func (db *DB) GetLatestFirmwareInfo(repo string, tags []string) (*FirmwareInfo, 
 	if err != nil {
 		return nil, err
 	}
+    defer stmt.Close()
 
 	rows, err := stmt.Query(values...)
 	if err != nil {
 		return nil, err
 	}
+    defer rows.Close()
 
 	if !rows.Next() {
 		return nil, nil
@@ -153,11 +156,13 @@ func (db *DB) GetFirmareInfoById(id int64) (*FirmwareInfo, error) {
 	if err != nil {
 		return nil, err
 	}
+    defer stmt.Close()
 
 	rows, err := stmt.Query(id)
 	if err != nil {
 		return nil, err
 	}
+    defer rows.Close()
 
 	var fi *FirmwareInfo = nil
 	if rows.Next() {
@@ -175,11 +180,13 @@ func (db *DB) GetAllFirmwaresInfo() ([]FirmwareInfo, error) {
 	if err != nil {
 		return nil, err
 	}
+    defer stmt.Close()
 
 	rows, err := stmt.Query()
 	if err != nil {
 		return nil, err
 	}
+    defer rows.Close()
 
 	var fis []FirmwareInfo
 	for rows.Next() {
