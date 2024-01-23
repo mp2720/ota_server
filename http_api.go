@@ -67,6 +67,11 @@ type ApiAddFirmwareRequest struct {
 	BinBase64 string                    `json:"bin_base64" binding:"required"`
 }
 
+type ApiUserResponse struct {
+	Name    string `json:"name"`
+	IsBoard bool   `json:"is_board"`
+}
+
 func (api *Api) newFirmwareResponse(info *FirmwareInfo) ApiFirmwareResponse {
 	return ApiFirmwareResponse{
 		ApiFirmwareInfoResponse{
@@ -279,6 +284,28 @@ func (api *Api) getFirmwareBinary(c *gin.Context) {
 	c.File(path)
 }
 
+// getAuthenticatedUser godoc
+//
+//	@Summary	Get authenticated user
+//	@Schemes
+//	@Produce		json
+//	@Description	Get authenticated user
+//	@Success		200	{object}	ApiUserResponse	"ok"
+//	@Failure		401	{object}	HttpError		"Invalid auth token"
+//	@Security		ApiKeyAuth
+//	@Router			/users/me [get]
+func (api *Api) getAuthenticatedUser(c *gin.Context) {
+	subj, ok := api.auth(c, nil)
+	if !ok {
+		return
+	}
+
+	c.JSON(http.StatusOK, ApiUserResponse{
+		subj.name,
+		subj.isBoard,
+	})
+}
+
 func (api *Api) StartServer() error {
 	r := gin.Default()
 	v1 := r.Group("/api/v1")
@@ -287,6 +314,7 @@ func (api *Api) StartServer() error {
 		v1.GET("/firmwares", api.getAllFirmwares)
 		v1.POST("/firmwares", api.addFirmware)
 		v1.GET("/bin/:id", api.getFirmwareBinary)
+		v1.GET("/users/me", api.getAuthenticatedUser)
 	}
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	return r.Run(api.cfg.port)

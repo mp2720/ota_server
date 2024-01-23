@@ -185,6 +185,34 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/users/me": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get authenticated user",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get authenticated user",
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "$ref": "#/definitions/main.ApiUserResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid auth token",
+                        "schema": {
+                            "$ref": "#/definitions/main.HttpError"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -281,6 +309,17 @@ const docTemplate = `{
                 },
                 "info": {
                     "$ref": "#/definitions/main.ApiFirmwareInfoResponse"
+                }
+            }
+        },
+        "main.ApiUserResponse": {
+            "type": "object",
+            "properties": {
+                "is_board": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
                 }
             }
         },

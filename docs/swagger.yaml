@@ -64,6 +64,13 @@ definitions:
       info:
         $ref: '#/definitions/main.ApiFirmwareInfoResponse'
     type: object
+  main.ApiUserResponse:
+    properties:
+      is_board:
+        type: boolean
+      name:
+        type: string
+    type: object
   main.HttpError:
     properties:
       code:
@@ -185,6 +192,23 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Get latest firmware version
+  /users/me:
+    get:
+      description: Get authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            $ref: '#/definitions/main.ApiUserResponse'
+        "401":
+          description: Invalid auth token
+          schema:
+            $ref: '#/definitions/main.HttpError'
+      security:
+      - ApiKeyAuth: []
+      summary: Get authenticated user
 securityDefinitions:
   ApiKeyAuth:
     in: header
