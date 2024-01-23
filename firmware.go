@@ -30,6 +30,8 @@ func (svc *FirmwareService) AddFirmware(info *FirmwareInfo, bytes []byte) (*Firm
 		return nil, &SHA256DiffersError{given: info.Sha256, computed: hash}
 	}
 
+    info.Size = len(bytes)
+
 	addedInfo, err := svc.db.AddFirmwareInfo(info)
 	if err != nil {
 		return nil, err

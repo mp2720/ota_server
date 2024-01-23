@@ -46,6 +46,7 @@ type ApiFirmwareInfoResponse struct {
 	LoadedBy    string `json:"loaded_by"`
 	Sha256      string `json:"sha256"`
 	Description string `json:"description"`
+	Size        int    `json:"size"`
 }
 
 type ApiFirmwareResponse struct {
@@ -79,6 +80,7 @@ func (api *Api) newFirmwareResponse(info *FirmwareInfo) ApiFirmwareResponse {
 			info.LoadedBy,
 			info.Sha256,
 			info.Description,
+			info.Size,
 		},
 		fmt.Sprintf("%s/bin/%d", api.cfg.host, info.Id),
 	}

@@ -264,6 +264,9 @@ const docTemplate = `{
                 "sha256": {
                     "type": "string"
                 },
+                "size": {
+                    "type": "integer"
+                },
                 "tag": {
                     "type": "string"
                 }

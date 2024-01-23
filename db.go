@@ -17,6 +17,7 @@ type FirmwareInfo struct {
 	LoadedBy    string
 	Sha256      string
 	Description string
+	Size        int
 }
 
 type DB struct {
@@ -36,7 +37,8 @@ func (db *DB) createFirmwareTable() error {
 	    loadedAt    DATETIME NOT NULL,
 	    loadedBy    TEXT NOT NULL,
         sha256      TEXT NOT NULL,
-        description TEXT NOT NULL
+        description TEXT NOT NULL,
+        size        INTEGER NOT NULL
 	);`)
 
 	return err
@@ -65,8 +67,9 @@ func (db *DB) AddFirmwareInfo(info *FirmwareInfo) (*FirmwareInfo, error) {
         loadedAt,
         loadedBy,
         sha256,
-        description
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
+        description,
+        size
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +82,8 @@ func (db *DB) AddFirmwareInfo(info *FirmwareInfo) (*FirmwareInfo, error) {
 		info.LoadedAt,
 		info.LoadedBy,
 		info.Sha256,
-        info.Description,
+		info.Description,
+        info.Size,
 	)
 	if err != nil {
 		return nil, err
@@ -105,7 +109,8 @@ func firmwareInfoFromSqlRows(rows *sql.Rows) (*FirmwareInfo, error) {
 		&fi.LoadedAt,
 		&fi.LoadedBy,
 		&fi.Sha256,
-        &fi.Description,
+		&fi.Description,
+        &fi.Size,
 	); err != nil {
 		return nil, err
 	}

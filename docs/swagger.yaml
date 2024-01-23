@@ -47,6 +47,8 @@ definitions:
         type: string
       sha256:
         type: string
+      size:
+        type: integer
       tag:
         type: string
     type: object
