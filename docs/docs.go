@@ -193,7 +193,6 @@ const docTemplate = `{
             "required": [
                 "boards",
                 "built_at",
-                "commit_id",
                 "repo_name"
             ],
             "properties": {

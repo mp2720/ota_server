@@ -55,7 +55,7 @@ type ApiFirmwareResponse struct {
 
 type ApiAddFirmwareInfoRequest struct {
 	RepoName    string   `json:"repo_name" binding:"required"`
-	CommitId    string   `json:"commit_id" binding:"required"`
+	CommitId    string   `json:"commit_id"`
 	Boards      []string `json:"boards" binding:"required,min=1,dive,min=1"`
 	BuiltAt     int64    `json:"built_at" binding:"required"`
 	Sha256      string   `json:"sha256"`
