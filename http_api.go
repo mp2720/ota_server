@@ -15,12 +15,11 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/swaggo/files"
-	"github.com/swaggo/gin-swagger"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 
 	_ "mp1884/ota_server/docs"
 )
@@ -37,16 +36,16 @@ type HttpError struct {
 }
 
 type ApiFirmwareInfoResponse struct {
-	Id          int64  `json:"id"`
-	RepoName    string `json:"repo_name"`
-	CommitId    string `json:"commit_id"`
-	Tag         string `json:"tag"`
-	BuiltAt     int64  `json:"built_at"`
-	LoadedAt    int64  `json:"loaded_at"`
-	LoadedBy    string `json:"loaded_by"`
-	Sha256      string `json:"sha256"`
-	Description string `json:"description"`
-	Size        int    `json:"size"`
+	Id          int64    `json:"id"`
+	RepoName    string   `json:"repo_name"`
+	CommitId    string   `json:"commit_id"`
+	Boards      []string `json:"boards"`
+	BuiltAt     int64    `json:"built_at"`
+	LoadedAt    int64    `json:"loaded_at"`
+	LoadedBy    string   `json:"loaded_by"`
+	Sha256      string   `json:"sha256"`
+	Description string   `json:"description"`
+	Size        int      `json:"size"`
 }
 
 type ApiFirmwareResponse struct {
@@ -55,12 +54,12 @@ type ApiFirmwareResponse struct {
 }
 
 type ApiAddFirmwareInfoRequest struct {
-	RepoName    string `json:"repo_name" binding:"required"`
-	CommitId    string `json:"commit_id" binding:"required"`
-	Tag         string `json:"tag" binding:"alphanum"`
-	BuiltAt     int64  `json:"built_at" binding:"required"`
-	Sha256      string `json:"sha256"`
-	Description string `json:"description"`
+	RepoName    string   `json:"repo_name" binding:"required"`
+	CommitId    string   `json:"commit_id" binding:"required"`
+	Boards      []string `json:"boards" binding:"required,min=1,dive,min=1"`
+	BuiltAt     int64    `json:"built_at" binding:"required"`
+	Sha256      string   `json:"sha256"`
+	Description string   `json:"description"`
 }
 
 type ApiAddFirmwareRequest struct {
@@ -74,7 +73,7 @@ func (api *Api) newFirmwareResponse(info *FirmwareInfo) ApiFirmwareResponse {
 			info.Id,
 			info.RepoName,
 			info.CommitId,
-			info.Tag,
+			info.Boards,
 			info.BuiltAt.Unix(),
 			info.LoadedAt.Unix(),
 			info.LoadedBy,
@@ -86,7 +85,7 @@ func (api *Api) newFirmwareResponse(info *FirmwareInfo) ApiFirmwareResponse {
 	}
 }
 
-func (api *Api) auth(c *gin.Context, canBeBoard bool) (*TokenSubject, bool) {
+func (api *Api) auth(c *gin.Context, constraints *TokenSubject) (*TokenSubject, bool) {
 	token := c.GetHeader("X-Token")
 	subject, err := api.tokenSvc.ParseToken(token)
 	if err != nil {
@@ -97,7 +96,7 @@ func (api *Api) auth(c *gin.Context, canBeBoard bool) (*TokenSubject, bool) {
 		return nil, false
 	}
 
-	if !canBeBoard && subject.isBoard {
+	if constraints != nil && constraints.isBoard != subject.isBoard {
 		c.JSON(http.StatusForbidden, HttpError{
 			http.StatusForbidden,
 			"access denied",
@@ -112,31 +111,22 @@ func (api *Api) auth(c *gin.Context, canBeBoard bool) (*TokenSubject, bool) {
 //
 //	@Summary	Get latest firmware version
 //	@Schemes
-//	@Description	Get latest firmware version for given repo and tags. Available for boards.
+//	@Description	Get latest firmware version for given repo and tags. Only for boards
 //	@Produce		json
 //	@Param			repo	query		string				false	"name of firmware's repo"
-//	@Param			tags	query		array				false	"one of tags that firmware should have, can be omitted"
 //	@Success		200		{object}	ApiFirmwareResponse	"ok"
 //	@Failure		401		{object}	HttpError			"Invalid auth token"
+//	@Failure		403		{object}	HttpError			"Access is denied"
 //	@Failure		404		{object}	HttpError			"firmware for given repo and tags not found"
 //	@Security		ApiKeyAuth
 //	@Router			/firmwares/latest [get]
 func (api *Api) getLatestFirmware(c *gin.Context) {
-	_, ok := api.auth(c, true)
+	subject, ok := api.auth(c, &TokenSubject{isBoard: true})
 	if !ok {
 		return
 	}
 
-	repoName := c.Query("repo")
-	tagsStr := c.Query("tags")
-	tags := strings.Split(tagsStr, ",")
-	if len(tags) == 1 && tags[0] == "" {
-		tags = []string{}
-	}
-
-	fmt.Printf("repo=%s tags=%+v\n", repoName, tags)
-
-	fi, err := api.firmwareSvc.GetLatestFirmware(repoName, tags)
+	fi, err := api.firmwareSvc.GetLatestFirmware(c.Query("repo"), subject.name)
 	if err != nil {
 		panic(err)
 	}
@@ -144,7 +134,7 @@ func (api *Api) getLatestFirmware(c *gin.Context) {
 	if fi == nil {
 		c.JSON(http.StatusNotFound, HttpError{
 			http.StatusNotFound,
-			"no firmware found for given repo and tags",
+			"no firmware found for this board in repo",
 		})
 		return
 	}
@@ -156,7 +146,7 @@ func (api *Api) getLatestFirmware(c *gin.Context) {
 //
 //	@Summary	Get all firmwares
 //	@Schemes
-//	@Description	Get all firmwares
+//	@Description	Get all firmwares. Only for non-board users
 //	@Produce		json
 //	@Success		200	{array}		ApiFirmwareResponse	"ok"
 //	@Failure		401	{object}	HttpError			"Invalid auth token"
@@ -164,7 +154,7 @@ func (api *Api) getLatestFirmware(c *gin.Context) {
 //	@Security		ApiKeyAuth
 //	@Router			/firmwares [get]
 func (api *Api) getAllFirmwares(c *gin.Context) {
-	_, ok := api.auth(c, false)
+	_, ok := api.auth(c, &TokenSubject{isBoard: false})
 	if !ok {
 		return
 	}
@@ -187,7 +177,7 @@ func (api *Api) getAllFirmwares(c *gin.Context) {
 //	@Summary	Add firmware information and binary
 //	@Schemes
 //	@Accept			json
-//	@Description	Get all firmwares
+//	@Description	Get all firmwares. Only for non-board users
 //	@Produce		json
 //	@Param			firmware	body		ApiAddFirmwareRequest	true	"firmware info and binary"
 //	@Success		201			{object}	ApiFirmwareResponse		"ok"
@@ -196,7 +186,7 @@ func (api *Api) getAllFirmwares(c *gin.Context) {
 //	@Security		ApiKeyAuth
 //	@Router			/firmwares [post]
 func (api *Api) addFirmware(c *gin.Context) {
-	subject, ok := api.auth(c, false)
+	subject, ok := api.auth(c, &TokenSubject{isBoard: false})
 	if !ok {
 		return
 	}
@@ -213,7 +203,7 @@ func (api *Api) addFirmware(c *gin.Context) {
 	info := FirmwareInfo{
 		RepoName:    json.Info.RepoName,
 		CommitId:    json.Info.CommitId,
-		Tag:         json.Info.Tag,
+		Boards:      json.Info.Boards,
 		BuiltAt:     time.Unix(json.Info.BuiltAt, 0),
 		LoadedBy:    subject.name,
 		LoadedAt:    time.Now(),
@@ -251,16 +241,15 @@ func (api *Api) addFirmware(c *gin.Context) {
 //
 //	@Summary	Get binary file
 //	@Schemes
-//	@Description	Get binary firmware file with given id
+//	@Description	Get binary firmware file with given id. Available for all authenticated users
 //	@Param			id	path		int	true	"firmware's ID"
 //	@Success		200	{file}		file
 //	@Failure		401	{object}	HttpError	"Invalid auth token"
-//	@Failure		403	{object}	HttpError	"Access is denied"
 //	@Failure		404	{object}	HttpError	"firmware for given repo and tags not found"
 //	@Security		ApiKeyAuth
 //	@Router			/bin/{id} [get]
 func (api *Api) getFirmwareBinary(c *gin.Context) {
-	_, ok := api.auth(c, true)
+	_, ok := api.auth(c, nil)
 	if !ok {
 		return
 	}

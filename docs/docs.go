@@ -22,7 +22,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Get binary firmware file with given id",
+                "description": "Get binary firmware file with given id. Available for all authenticated users",
                 "summary": "Get binary file",
                 "parameters": [
                     {
@@ -46,12 +46,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/main.HttpError"
                         }
                     },
-                    "403": {
-                        "description": "Access is denied",
-                        "schema": {
-                            "$ref": "#/definitions/main.HttpError"
-                        }
-                    },
                     "404": {
                         "description": "firmware for given repo and tags not found",
                         "schema": {
@@ -68,7 +62,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Get all firmwares",
+                "description": "Get all firmwares. Only for non-board users",
                 "produces": [
                     "application/json"
                 ],
@@ -103,7 +97,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Get all firmwares",
+                "description": "Get all firmwares. Only for non-board users",
                 "consumes": [
                     "application/json"
                 ],
@@ -151,7 +145,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Get latest firmware version for given repo and tags. Available for boards.",
+                "description": "Get latest firmware version for given repo and tags. Only for boards",
                 "produces": [
                     "application/json"
                 ],
@@ -161,12 +155,6 @@ const docTemplate = `{
                         "type": "string",
                         "description": "name of firmware's repo",
                         "name": "repo",
-                        "in": "query"
-                    },
-                    {
-                        "type": "array",
-                        "description": "one of tags that firmware should have, can be omitted",
-                        "name": "tags",
                         "in": "query"
                     }
                 ],
@@ -179,6 +167,12 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Invalid auth token",
+                        "schema": {
+                            "$ref": "#/definitions/main.HttpError"
+                        }
+                    },
+                    "403": {
+                        "description": "Access is denied",
                         "schema": {
                             "$ref": "#/definitions/main.HttpError"
                         }
@@ -197,11 +191,19 @@ const docTemplate = `{
         "main.ApiAddFirmwareInfoRequest": {
             "type": "object",
             "required": [
+                "boards",
                 "built_at",
                 "commit_id",
                 "repo_name"
             ],
             "properties": {
+                "boards": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "built_at": {
                     "type": "integer"
                 },
@@ -215,9 +217,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "sha256": {
-                    "type": "string"
-                },
-                "tag": {
                     "type": "string"
                 }
             }
@@ -240,6 +239,12 @@ const docTemplate = `{
         "main.ApiFirmwareInfoResponse": {
             "type": "object",
             "properties": {
+                "boards": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "built_at": {
                     "type": "integer"
                 },
@@ -266,9 +271,6 @@ const docTemplate = `{
                 },
                 "size": {
                     "type": "integer"
-                },
-                "tag": {
-                    "type": "string"
                 }
             }
         },

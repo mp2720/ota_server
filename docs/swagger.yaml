@@ -2,6 +2,11 @@ basePath: /api/v1
 definitions:
   main.ApiAddFirmwareInfoRequest:
     properties:
+      boards:
+        items:
+          type: string
+        minItems: 1
+        type: array
       built_at:
         type: integer
       commit_id:
@@ -12,9 +17,8 @@ definitions:
         type: string
       sha256:
         type: string
-      tag:
-        type: string
     required:
+    - boards
     - built_at
     - commit_id
     - repo_name
@@ -31,6 +35,10 @@ definitions:
     type: object
   main.ApiFirmwareInfoResponse:
     properties:
+      boards:
+        items:
+          type: string
+        type: array
       built_at:
         type: integer
       commit_id:
@@ -49,8 +57,6 @@ definitions:
         type: string
       size:
         type: integer
-      tag:
-        type: string
     type: object
   main.ApiFirmwareResponse:
     properties:
@@ -74,7 +80,8 @@ info:
 paths:
   /bin/{id}:
     get:
-      description: Get binary firmware file with given id
+      description: Get binary firmware file with given id. Available for all authenticated
+        users
       parameters:
       - description: firmware's ID
         in: path
@@ -90,10 +97,6 @@ paths:
           description: Invalid auth token
           schema:
             $ref: '#/definitions/main.HttpError'
-        "403":
-          description: Access is denied
-          schema:
-            $ref: '#/definitions/main.HttpError'
         "404":
           description: firmware for given repo and tags not found
           schema:
@@ -103,7 +106,7 @@ paths:
       summary: Get binary file
   /firmwares:
     get:
-      description: Get all firmwares
+      description: Get all firmwares. Only for non-board users
       produces:
       - application/json
       responses:
@@ -127,7 +130,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Get all firmwares
+      description: Get all firmwares. Only for non-board users
       parameters:
       - description: firmware info and binary
         in: body
@@ -155,17 +158,12 @@ paths:
       summary: Add firmware information and binary
   /firmwares/latest:
     get:
-      description: Get latest firmware version for given repo and tags. Available
-        for boards.
+      description: Get latest firmware version for given repo and tags. Only for boards
       parameters:
       - description: name of firmware's repo
         in: query
         name: repo
         type: string
-      - description: one of tags that firmware should have, can be omitted
-        in: query
-        name: tags
-        type: array
       produces:
       - application/json
       responses:
@@ -175,6 +173,10 @@ paths:
             $ref: '#/definitions/main.ApiFirmwareResponse'
         "401":
           description: Invalid auth token
+          schema:
+            $ref: '#/definitions/main.HttpError'
+        "403":
+          description: Access is denied
           schema:
             $ref: '#/definitions/main.HttpError'
         "404":

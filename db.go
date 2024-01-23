@@ -11,7 +11,7 @@ type FirmwareInfo struct {
 	Id          int64
 	RepoName    string
 	CommitId    string
-	Tag         string
+	Boards      []string // not presented in firmwares table
 	BuiltAt     time.Time
 	LoadedAt    time.Time
 	LoadedBy    string
@@ -20,26 +20,34 @@ type FirmwareInfo struct {
 	Size        int
 }
 
+type FirmwareForBoardRecord struct {
+	BoardName  string
+	FirmwareId int64
+}
+
 type DB struct {
 	*sql.DB
 }
 
 const SQLITE_DB_FILENAME = "firmware.db"
 
-func (db *DB) createFirmwareTable() error {
+func (db *DB) createTables() error {
 	_, err := db.Exec(`
 	CREATE TABLE IF NOT EXISTS firmwares (
 	    id          INTEGER PRIMARY KEY AUTOINCREMENT,
 	    repoName    TEXT NOT NULL,
 	    commitId    TEXT NOT NULL,
-	    tag         TEXT NOT NULL,
 	    builtAt     DATETIME NOT NULL,
 	    loadedAt    DATETIME NOT NULL,
 	    loadedBy    TEXT NOT NULL,
         sha256      TEXT NOT NULL,
         description TEXT NOT NULL,
         size        INTEGER NOT NULL
-	);`)
+	);
+    CREATE TABLE IF NOT EXISTS boards (
+        boardName   TEXT NOT NULL,
+        firmwareId  INTEGER NOT NULL
+    );`)
 
 	return err
 }
@@ -52,7 +60,7 @@ func NewDB(cfg *Config) (*DB, error) {
 	}
 
 	db := &DB{_db}
-	err = db.createFirmwareTable()
+	err = db.createTables()
 
 	return db, err
 }
@@ -62,29 +70,27 @@ func (db *DB) AddFirmwareInfo(info *FirmwareInfo) (*FirmwareInfo, error) {
     INSERT INTO firmwares (
         repoName,
         commitId,
-        tag,
         builtAt,
         loadedAt,
         loadedBy,
         sha256,
         description,
         size
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
 	if err != nil {
 		return nil, err
 	}
-    defer stmt.Close()
+	defer stmt.Close()
 
 	result, err := stmt.Exec(
 		info.RepoName,
 		info.CommitId,
-		info.Tag,
 		info.BuiltAt,
 		info.LoadedAt,
 		info.LoadedBy,
 		info.Sha256,
 		info.Description,
-        info.Size,
+		info.Size,
 	)
 	if err != nil {
 		return nil, err
@@ -96,59 +102,103 @@ func (db *DB) AddFirmwareInfo(info *FirmwareInfo) (*FirmwareInfo, error) {
 		return nil, err
 	}
 
+	// TODO: if firmware was added, but adding boards failed?
+	stmt2, err := db.Prepare(`
+    INSERT INTO boards (
+        boardName,
+        firmwareId
+    ) VALUES (?, ?)
+    `)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt2.Close()
+
+	for _, board := range info.Boards {
+		_, err := stmt2.Exec(
+			board,
+			ret.Id,
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return &ret, nil
 }
 
-func firmwareInfoFromSqlRows(rows *sql.Rows) (*FirmwareInfo, error) {
+func (db *DB) firmwareInfoFromSqlRows(firmwareRows *sql.Rows) (*FirmwareInfo, error) {
 	var fi FirmwareInfo
-	if err := rows.Scan(
+	if err := firmwareRows.Scan(
 		&fi.Id,
 		&fi.RepoName,
 		&fi.CommitId,
-		&fi.Tag,
 		&fi.BuiltAt,
 		&fi.LoadedAt,
 		&fi.LoadedBy,
 		&fi.Sha256,
 		&fi.Description,
-        &fi.Size,
+		&fi.Size,
 	); err != nil {
 		return nil, err
+	}
+
+	stmt, err := db.Prepare("SELECT boardName FROM boards where firmwareId = ?;")
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	boardRows, err := stmt.Query(fi.Id)
+	if err != nil {
+		return nil, err
+	}
+	defer boardRows.Close()
+
+	for boardRows.Next() {
+		var board string
+		if err := boardRows.Scan(&board); err != nil {
+			return nil, err
+		}
+		fi.Boards = append(fi.Boards, board)
 	}
 
 	return &fi, nil
 }
 
-func (db *DB) GetLatestFirmwareInfo(repo string, tags []string) (*FirmwareInfo, error) {
-	query := "SELECT * FROM firmwares WHERE repoName = ?"
-	values := [](any){repo}
-	if len(tags) > 0 {
-		query += " AND tag IN ("
-		for i := 0; i < len(tags)-1; i++ {
-			query += "?, "
-			values = append(values, tags[i])
-		}
-		query += "?)"
-		values = append(values, tags[len(tags)-1])
-	}
-	query += " ORDER BY builtAt DESC LIMIT 1;"
-	stmt, err := db.Prepare(query)
+func (db *DB) GetLatestFirmwareInfo(repo string, board string) (*FirmwareInfo, error) {
+	stmt, err := db.Prepare(`
+        SELECT
+	    	firmwares.id,
+	    	firmwares.repoName,
+	    	firmwares.commitId,
+	    	firmwares.builtAt,
+	    	firmwares.loadedAt,
+	    	firmwares.loadedBy,
+	    	firmwares.sha256,
+	    	firmwares.description,
+	    	firmwares.size
+        FROM boards JOIN firmwares ON firmwares.id = boards.firmwareId
+        WHERE
+            firmwares.repoName = ?
+            AND boards.boardName = ?
+        ORDER BY firmwares.builtAt DESC LIMIT 1;`)
 	if err != nil {
 		return nil, err
 	}
-    defer stmt.Close()
+	defer stmt.Close()
 
-	rows, err := stmt.Query(values...)
+	rows, err := stmt.Query(repo, board)
 	if err != nil {
 		return nil, err
 	}
-    defer rows.Close()
+	defer rows.Close()
 
 	if !rows.Next() {
 		return nil, nil
 	}
 
-	return firmwareInfoFromSqlRows(rows)
+	return db.firmwareInfoFromSqlRows(rows)
 }
 
 func (db *DB) GetFirmareInfoById(id int64) (*FirmwareInfo, error) {
@@ -156,23 +206,19 @@ func (db *DB) GetFirmareInfoById(id int64) (*FirmwareInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-    defer stmt.Close()
+	defer stmt.Close()
 
 	rows, err := stmt.Query(id)
 	if err != nil {
 		return nil, err
 	}
-    defer rows.Close()
+	defer rows.Close()
 
-	var fi *FirmwareInfo = nil
-	if rows.Next() {
-		fi, err = firmwareInfoFromSqlRows(rows)
-		if err != nil {
-			return nil, err
-		}
+	if !rows.Next() {
+		return nil, nil
 	}
 
-	return fi, nil
+	return db.firmwareInfoFromSqlRows(rows)
 }
 
 func (db *DB) GetAllFirmwaresInfo() ([]FirmwareInfo, error) {
@@ -180,17 +226,17 @@ func (db *DB) GetAllFirmwaresInfo() ([]FirmwareInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-    defer stmt.Close()
+	defer stmt.Close()
 
 	rows, err := stmt.Query()
 	if err != nil {
 		return nil, err
 	}
-    defer rows.Close()
+	defer rows.Close()
 
 	var fis []FirmwareInfo
 	for rows.Next() {
-		fi, err := firmwareInfoFromSqlRows(rows)
+		fi, err := db.firmwareInfoFromSqlRows(rows)
 		if err != nil {
 			return nil, err
 		}
