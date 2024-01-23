@@ -98,7 +98,7 @@ paths:
           schema:
             $ref: '#/definitions/main.HttpError'
         "404":
-          description: firmware for given repo and tags not found
+          description: firmware not found
           schema:
             $ref: '#/definitions/main.HttpError'
       security:
@@ -180,7 +180,7 @@ paths:
           schema:
             $ref: '#/definitions/main.HttpError'
         "404":
-          description: firmware for given repo and tags not found
+          description: no firmware found for this board in repo
           schema:
             $ref: '#/definitions/main.HttpError'
       security:

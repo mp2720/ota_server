@@ -47,7 +47,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "firmware for given repo and tags not found",
+                        "description": "firmware not found",
                         "schema": {
                             "$ref": "#/definitions/main.HttpError"
                         }
@@ -178,7 +178,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "firmware for given repo and tags not found",
+                        "description": "no firmware found for this board in repo",
                         "schema": {
                             "$ref": "#/definitions/main.HttpError"
                         }

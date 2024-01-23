@@ -117,7 +117,7 @@ func (api *Api) auth(c *gin.Context, constraints *TokenSubject) (*TokenSubject, 
 //	@Success		200		{object}	ApiFirmwareResponse	"ok"
 //	@Failure		401		{object}	HttpError			"Invalid auth token"
 //	@Failure		403		{object}	HttpError			"Access is denied"
-//	@Failure		404		{object}	HttpError			"firmware for given repo and tags not found"
+//	@Failure		404		{object}	HttpError			"no firmware found for this board in repo"
 //	@Security		ApiKeyAuth
 //	@Router			/firmwares/latest [get]
 func (api *Api) getLatestFirmware(c *gin.Context) {
@@ -245,7 +245,7 @@ func (api *Api) addFirmware(c *gin.Context) {
 //	@Param			id	path		int	true	"firmware's ID"
 //	@Success		200	{file}		file
 //	@Failure		401	{object}	HttpError	"Invalid auth token"
-//	@Failure		404	{object}	HttpError	"firmware for given repo and tags not found"
+//	@Failure		404	{object}	HttpError	"firmware not found"
 //	@Security		ApiKeyAuth
 //	@Router			/bin/{id} [get]
 func (api *Api) getFirmwareBinary(c *gin.Context) {
