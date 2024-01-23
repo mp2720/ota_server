@@ -15,7 +15,7 @@ type FirmwareInfo struct {
 	BuiltAt     time.Time
 	LoadedAt    time.Time
 	LoadedBy    string
-	Sha256      string
+	Md5         string
 	Description string
 	Size        int
 }
@@ -40,7 +40,7 @@ func (db *DB) createTables() error {
 	    builtAt     DATETIME NOT NULL,
 	    loadedAt    DATETIME NOT NULL,
 	    loadedBy    TEXT NOT NULL,
-        sha256      TEXT NOT NULL,
+        md5         TEXT NOT NULL,
         description TEXT NOT NULL,
         size        INTEGER NOT NULL
 	);
@@ -73,7 +73,7 @@ func (db *DB) AddFirmwareInfo(info *FirmwareInfo) (*FirmwareInfo, error) {
         builtAt,
         loadedAt,
         loadedBy,
-        sha256,
+        md5,
         description,
         size
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
@@ -88,7 +88,7 @@ func (db *DB) AddFirmwareInfo(info *FirmwareInfo) (*FirmwareInfo, error) {
 		info.BuiltAt,
 		info.LoadedAt,
 		info.LoadedBy,
-		info.Sha256,
+		info.Md5,
 		info.Description,
 		info.Size,
 	)
@@ -136,7 +136,7 @@ func (db *DB) firmwareInfoFromSqlRows(firmwareRows *sql.Rows) (*FirmwareInfo, er
 		&fi.BuiltAt,
 		&fi.LoadedAt,
 		&fi.LoadedBy,
-		&fi.Sha256,
+		&fi.Md5,
 		&fi.Description,
 		&fi.Size,
 	); err != nil {
@@ -175,7 +175,7 @@ func (db *DB) GetLatestFirmwareInfo(repo string, board string) (*FirmwareInfo, e
 	    	firmwares.builtAt,
 	    	firmwares.loadedAt,
 	    	firmwares.loadedBy,
-	    	firmwares.sha256,
+	    	firmwares.md5,
 	    	firmwares.description,
 	    	firmwares.size
         FROM boards JOIN firmwares ON firmwares.id = boards.firmwareId

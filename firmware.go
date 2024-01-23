@@ -1,7 +1,7 @@
 package main
 
 import (
-	"crypto/sha256"
+	"crypto/md5"
 	"fmt"
 )
 
@@ -10,27 +10,27 @@ type FirmwareService struct {
 	bins *BinariesService
 }
 
-type SHA256DiffersError struct {
+type Md5DiffersError struct {
 	given    string
 	computed string
 }
 
-func (e *SHA256DiffersError) Error() string {
-	return fmt.Sprintf("SHA256 %s (given) != %s (computed)", e.given, e.computed)
+func (e *Md5DiffersError) Error() string {
+	return fmt.Sprintf("MD5 %s (given) != %s (computed)", e.given, e.computed)
 }
 
 func (svc *FirmwareService) AddFirmware(info *FirmwareInfo, bytes []byte) (*FirmwareInfo, error) {
 	// TODO: AES encryption.
-	h := sha256.New()
+	h := md5.New()
 	h.Write([]byte(bytes))
 	hash := fmt.Sprintf("%x", h.Sum(nil))
-	if info.Sha256 == "" {
-		info.Sha256 = hash
-	} else if hash != info.Sha256 {
-		return nil, &SHA256DiffersError{given: info.Sha256, computed: hash}
+	if info.Md5 == "" {
+		info.Md5 = hash
+	} else if hash != info.Md5 {
+		return nil, &Md5DiffersError{given: info.Md5, computed: hash}
 	}
 
-    info.Size = len(bytes)
+	info.Size = len(bytes)
 
 	addedInfo, err := svc.db.AddFirmwareInfo(info)
 	if err != nil {

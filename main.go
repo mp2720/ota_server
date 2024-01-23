@@ -7,8 +7,8 @@ import (
 )
 
 func main() {
-    // Not sure that go-sqlite3 is ok with concurrency, so it's better to allow only one thread.
-    runtime.GOMAXPROCS(1)
+	// Not sure that go-sqlite3 is ok with concurrency, so it's better to allow only one thread.
+	runtime.GOMAXPROCS(1)
 
 	cfg, err := LoadConfig()
 	if err != nil {
@@ -35,7 +35,7 @@ func main() {
 		}
 		api := Api{
 			&firmwareSvc,
-            &tokenSvc,
+			&tokenSvc,
 			cfg,
 		}
 		if err := api.StartServer(); err != nil {
@@ -47,15 +47,15 @@ func main() {
 		fmt.Printf("\t-b - if subject is board\n")
 		os.Exit(0)
 	} else {
-        cliSvc := CliService{
-            &tokenSvc,
-            os.Args,
-        }
-        result, err := cliSvc.ExecuteCliCommands()
-        if err != nil {
-            panic(err)
-        }
+		cliSvc := CliService{
+			&tokenSvc,
+			os.Args,
+		}
+		result, err := cliSvc.ExecuteCliCommands()
+		if err != nil {
+			panic(err)
+		}
 
-        fmt.Println(result)
+		fmt.Println(result)
 	}
 }

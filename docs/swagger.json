@@ -233,10 +233,10 @@
                 "description": {
                     "type": "string"
                 },
-                "repo_name": {
+                "md5": {
                     "type": "string"
                 },
-                "sha256": {
+                "repo_name": {
                     "type": "string"
                 }
             }
@@ -283,10 +283,10 @@
                 "loaded_by": {
                     "type": "string"
                 },
-                "repo_name": {
+                "md5": {
                     "type": "string"
                 },
-                "sha256": {
+                "repo_name": {
                     "type": "string"
                 },
                 "size": {

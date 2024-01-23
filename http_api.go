@@ -43,7 +43,7 @@ type ApiFirmwareInfoResponse struct {
 	BuiltAt     int64    `json:"built_at"`
 	LoadedAt    int64    `json:"loaded_at"`
 	LoadedBy    string   `json:"loaded_by"`
-	Sha256      string   `json:"sha256"`
+	Md5         string   `json:"md5"`
 	Description string   `json:"description"`
 	Size        int      `json:"size"`
 }
@@ -58,7 +58,7 @@ type ApiAddFirmwareInfoRequest struct {
 	CommitId    string   `json:"commit_id"`
 	Boards      []string `json:"boards" binding:"required,min=1,dive,min=1"`
 	BuiltAt     int64    `json:"built_at" binding:"required"`
-	Sha256      string   `json:"sha256"`
+	Md5         string   `json:"md5"`
 	Description string   `json:"description"`
 }
 
@@ -82,7 +82,7 @@ func (api *Api) newFirmwareResponse(info *FirmwareInfo) ApiFirmwareResponse {
 			info.BuiltAt.Unix(),
 			info.LoadedAt.Unix(),
 			info.LoadedBy,
-			info.Sha256,
+			info.Md5,
 			info.Description,
 			info.Size,
 		},
@@ -212,7 +212,7 @@ func (api *Api) addFirmware(c *gin.Context) {
 		BuiltAt:     time.Unix(json.Info.BuiltAt, 0),
 		LoadedBy:    subject.name,
 		LoadedAt:    time.Now(),
-		Sha256:      json.Info.Sha256,
+		Md5:         json.Info.Md5,
 		Description: json.Info.Description,
 	}
 
@@ -228,7 +228,7 @@ func (api *Api) addFirmware(c *gin.Context) {
 	addedInfo, err := api.firmwareSvc.AddFirmware(&info, bytes)
 	if err != nil {
 		switch err.(type) {
-		case *SHA256DiffersError:
+		case *Md5DiffersError:
 			c.JSON(http.StatusBadRequest, HttpError{
 				http.StatusBadRequest,
 				err.Error(),

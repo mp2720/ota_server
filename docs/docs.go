@@ -240,10 +240,10 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
-                "repo_name": {
+                "md5": {
                     "type": "string"
                 },
-                "sha256": {
+                "repo_name": {
                     "type": "string"
                 }
             }
@@ -290,10 +290,10 @@ const docTemplate = `{
                 "loaded_by": {
                     "type": "string"
                 },
-                "repo_name": {
+                "md5": {
                     "type": "string"
                 },
-                "sha256": {
+                "repo_name": {
                     "type": "string"
                 },
                 "size": {

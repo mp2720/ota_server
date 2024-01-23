@@ -13,9 +13,9 @@ definitions:
         type: string
       description:
         type: string
-      repo_name:
+      md5:
         type: string
-      sha256:
+      repo_name:
         type: string
     required:
     - boards
@@ -50,9 +50,9 @@ definitions:
         type: integer
       loaded_by:
         type: string
-      repo_name:
+      md5:
         type: string
-      sha256:
+      repo_name:
         type: string
       size:
         type: integer
