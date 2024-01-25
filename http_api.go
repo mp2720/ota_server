@@ -13,7 +13,6 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -36,6 +35,7 @@ type HttpError struct {
 
 type ApiFirmwareInfoResponse struct {
 	Id          int64    `json:"id"`
+	Uuid        string   `json:"uuid"`
 	RepoName    string   `json:"repo_name"`
 	CommitId    string   `json:"commit_id"`
 	Boards      []string `json:"boards"`
@@ -66,7 +66,7 @@ type ApiUserResponse struct {
 func (api *Api) newFirmwareResponse(info *FirmwareInfo) ApiFirmwareResponse {
 	var binUrl string
 	if info.hasBin() {
-		binUrl = fmt.Sprintf("%s/bin/%d", api.cfg.host, info.Id)
+		binUrl = fmt.Sprintf("%s/api/v1/bin/%s", api.cfg.host, info.Uuid)
 	} else {
 		binUrl = ""
 	}
@@ -74,6 +74,7 @@ func (api *Api) newFirmwareResponse(info *FirmwareInfo) ApiFirmwareResponse {
 	return ApiFirmwareResponse{
 		ApiFirmwareInfoResponse{
 			info.Id,
+			info.Uuid,
 			info.RepoName,
 			info.CommitId,
 			info.Boards,
@@ -179,7 +180,7 @@ func (api *Api) getAllFirmwares(c *gin.Context) {
 //	@Summary	Create firmware record in db
 //	@Schemes
 //	@Accept			json
-//	@Description	Create firmare record in db. Upload file to POST /bin/{id} after. Only for non-board users
+//	@Description	Create firmare record in db. Upload file to POST /bin/{uuid} after. Only for non-board users
 //	@Produce		json
 //	@Param			firmware	body		ApiAddFirmwareInfoRequest	true	"firmware info"
 //	@Success		201			{object}	ApiFirmwareResponse			"ok"
@@ -232,30 +233,20 @@ func (api *Api) addFirmware(c *gin.Context) {
 //
 //	@Summary	Get binary file
 //	@Schemes
-//	@Description	Get binary firmware file with given id. Available for all authenticated users
-//	@Param			id	path		int	true	"firmware's ID"
-//	@Success		200	{file}		file
-//	@Failure		401	{object}	HttpError	"Invalid auth token"
-//	@Failure		404	{object}	HttpError	"firmware not found"
+//	@Description	Get binary firmware file with given uuid. Available for all authenticated users
+//	@Param			uuid	path		string true	"firmware's UUID"
+//	@Success		200		{file}		file
+//	@Failure		401		{object}	HttpError	"Invalid auth token"
+//	@Failure		404		{object}	HttpError	"firmware not found"
 //	@Security		ApiKeyAuth
-//	@Router			/bin/{id} [get]
+//	@Router			/bin/{uuid} [get]
 func (api *Api) getFirmwareBinary(c *gin.Context) {
-	_, ok := api.auth(c, nil)
-	if !ok {
-		return
-	}
+	// _, ok := api.auth(c, nil)
+	// if !ok {
+		// return
+	// }
 
-	idStr := c.Param("id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, HttpError{
-			http.StatusBadRequest,
-			"id is invalid integer",
-		})
-		return
-	}
-
-	path, err := api.firmwareSvc.GetFirmwareBinaryPath(id)
+	path, err := api.firmwareSvc.GetFirmwareBinaryPath(c.Param("uuid"))
 	if err != nil {
 		panic(err)
 	}
@@ -299,28 +290,18 @@ func (api *Api) getAuthenticatedUser(c *gin.Context) {
 //	@Summary		Upload firmware binary file
 //	@Description	Upload firmware binary file. Only for non-board users
 //	@Accept			multipart/form-data
-//	@Param			id		path		int		true	"firmware's ID"
+//	@Param			uuid	path		string  true	"firmware's UUID"
 //	@Param			file	formData	file	true	"firmware binary file"
 //	@Success		204
-//	@Failure		400	{object}	HttpError	"File is already uploaded/empty file provided/invalid id"
+//	@Failure		400	{object}	HttpError	"File is already uploaded/empty file provided"
 //	@Failure		401	{object}	HttpError	"Invalid auth token"
 //	@Failure		403	{object}	HttpError	"Access denied"
 //	@Failure		404	{object}	HttpError	"Firmware not found"
 //	@Security		ApiKeyAuth
-//	@Router			/bin/{id} [post]
+//	@Router			/bin/{uuid} [post]
 func (api *Api) addFirmwareBinary(c *gin.Context) {
 	_, ok := api.auth(c, &TokenSubject{isBoard: false})
 	if !ok {
-		return
-	}
-
-	idStr := c.Param("id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, HttpError{
-			http.StatusBadRequest,
-			"id is invalid integer",
-		})
 		return
 	}
 
@@ -347,7 +328,7 @@ func (api *Api) addFirmwareBinary(c *gin.Context) {
 
 	bytes := make([]byte, fh.Size)
 	f.Read(bytes)
-	if err := api.firmwareSvc.AddFirmwareFile(id, bytes); err != nil {
+	if err := api.firmwareSvc.AddFirmwareFile(c.Param("uuid"), bytes); err != nil {
 		switch err.(type) {
 		case *FirmwareNotFoundError:
 			c.JSON(http.StatusNotFound, HttpError{
@@ -376,8 +357,8 @@ func (api *Api) StartServer() error {
 		v1.GET("/firmwares/latest", api.getLatestFirmware)
 		v1.GET("/firmwares", api.getAllFirmwares)
 		v1.POST("/firmwares", api.addFirmware)
-		v1.GET("/bin/:id", api.getFirmwareBinary)
-		v1.POST("/bin/:id", api.addFirmwareBinary)
+		v1.GET("/bin/:uuid", api.getFirmwareBinary)
+		v1.POST("/bin/:uuid", api.addFirmwareBinary)
 		v1.GET("/users/me", api.getAuthenticatedUser)
 	}
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

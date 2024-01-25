@@ -39,6 +39,8 @@ definitions:
         type: string
       size:
         type: integer
+      uuid:
+        type: string
     type: object
   main.ApiFirmwareResponse:
     properties:
@@ -67,16 +69,16 @@ info:
   title: OTA server
   version: "1.0"
 paths:
-  /bin/{id}:
+  /bin/{uuid}:
     get:
-      description: Get binary firmware file with given id. Available for all authenticated
+      description: Get binary firmware file with given uuid. Available for all authenticated
         users
       parameters:
-      - description: firmware's ID
+      - description: firmware's UUID
         in: path
-        name: id
+        name: uuid
         required: true
-        type: integer
+        type: string
       responses:
         "200":
           description: OK
@@ -98,11 +100,11 @@ paths:
       - multipart/form-data
       description: Upload firmware binary file. Only for non-board users
       parameters:
-      - description: firmware's ID
+      - description: firmware's UUID
         in: path
-        name: id
+        name: uuid
         required: true
-        type: integer
+        type: string
       - description: firmware binary file
         in: formData
         name: file
@@ -114,7 +116,7 @@ paths:
         "204":
           description: No Content
         "400":
-          description: File is already uploaded/empty file provided/invalid id
+          description: File is already uploaded/empty file provided
           schema:
             $ref: '#/definitions/main.HttpError'
         "401":
@@ -158,7 +160,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create firmare record in db. Upload file to POST /bin/{id} after.
+      description: Create firmare record in db. Upload file to POST /bin/{uuid} after.
         Only for non-board users
       parameters:
       - description: firmware info

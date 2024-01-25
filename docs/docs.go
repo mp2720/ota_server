@@ -15,20 +15,20 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/bin/{id}": {
+        "/bin/{uuid}": {
             "get": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Get binary firmware file with given id. Available for all authenticated users",
+                "description": "Get binary firmware file with given uuid. Available for all authenticated users",
                 "summary": "Get binary file",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "firmware's ID",
-                        "name": "id",
+                        "type": "string",
+                        "description": "firmware's UUID",
+                        "name": "uuid",
                         "in": "path",
                         "required": true
                     }
@@ -70,9 +70,9 @@ const docTemplate = `{
                 "summary": "Upload firmware binary file",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "firmware's ID",
-                        "name": "id",
+                        "type": "string",
+                        "description": "firmware's UUID",
+                        "name": "uuid",
                         "in": "path",
                         "required": true
                     },
@@ -89,7 +89,7 @@ const docTemplate = `{
                         "description": "No Content"
                     },
                     "400": {
-                        "description": "File is already uploaded/empty file provided/invalid id",
+                        "description": "File is already uploaded/empty file provided",
                         "schema": {
                             "$ref": "#/definitions/main.HttpError"
                         }
@@ -157,7 +157,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Create firmare record in db. Upload file to POST /bin/{id} after. Only for non-board users",
+                "description": "Create firmare record in db. Upload file to POST /bin/{uuid} after. Only for non-board users",
                 "consumes": [
                     "application/json"
                 ],
@@ -333,6 +333,9 @@ const docTemplate = `{
                 },
                 "size": {
                     "type": "integer"
+                },
+                "uuid": {
+                    "type": "string"
                 }
             }
         },

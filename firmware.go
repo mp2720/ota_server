@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/md5"
 	"fmt"
+	guuid "github.com/google/uuid"
 )
 
 type FirmwareService struct {
@@ -19,25 +20,26 @@ func (e *Md5DiffersError) Error() string {
 	return fmt.Sprintf("MD5 %s (given) != %s (computed)", e.given, e.computed)
 }
 
-type FirmwareNotFoundError struct {}
+type FirmwareNotFoundError struct{}
 
 func (e *FirmwareNotFoundError) Error() string {
 	return "firmware not found"
 }
 
-type FirmwareFileAlreadyUploaded struct {}
+type FirmwareFileAlreadyUploaded struct{}
 
 func (e *FirmwareFileAlreadyUploaded) Error() string {
-    return "firmware file already uploaded"
+	return "firmware file already uploaded"
 }
 
 func (svc *FirmwareService) CreateFirmware(info *FirmwareInfo) (*FirmwareInfo, error) {
 	info.Size = 0
+	info.Uuid = guuid.New().String()
 	return svc.db.AddFirmwareInfo(info)
 }
 
-func (svc *FirmwareService) AddFirmwareFile(id int64, bytes []byte) error {
-	info, err := svc.db.GetFirmareInfoById(id)
+func (svc *FirmwareService) AddFirmwareFile(uuid string, bytes []byte) error {
+	info, err := svc.db.GetFirmareInfoByUuid(uuid)
 	if err != nil {
 		return err
 	}
@@ -45,16 +47,16 @@ func (svc *FirmwareService) AddFirmwareFile(id int64, bytes []byte) error {
 		return &FirmwareNotFoundError{}
 	}
 
-    if info.hasBin() {
-        return &FirmwareFileAlreadyUploaded{}
-    }
+	if info.hasBin() {
+		return &FirmwareFileAlreadyUploaded{}
+	}
 
 	h := md5.New()
 	h.Write([]byte(bytes))
 	info.Md5 = fmt.Sprintf("%x", h.Sum(nil))
 	info.Size = len(bytes)
 
-	if err := svc.bins.AddFirmwareBinary(id, bytes); err != nil {
+	if err := svc.bins.AddFirmwareBinary(uuid, bytes); err != nil {
 		return err
 	}
 
@@ -65,13 +67,13 @@ func (serv *FirmwareService) GetLatestFirmware(repo string, board string) (*Firm
 	return serv.db.GetLatestFirmwareInfo(repo, board)
 }
 
-func (serv *FirmwareService) GetFirmwareBinaryPath(firmwareId int64) (string, error) {
-	fi, err := serv.db.GetFirmareInfoById(firmwareId)
+func (serv *FirmwareService) GetFirmwareBinaryPath(uuid string) (string, error) {
+	fi, err := serv.db.GetFirmareInfoByUuid(uuid)
 	if err != nil || fi == nil || !fi.hasBin() {
 		return "", err
 	}
 
-	return serv.bins.GetFirmwareBinaryPath(firmwareId), nil
+	return serv.bins.GetFirmwareBinaryPath(uuid), nil
 }
 
 func (serv *FirmwareService) GetAllFirmwaresInfo() ([]FirmwareInfo, error) {

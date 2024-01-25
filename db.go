@@ -10,6 +10,7 @@ import (
 
 type FirmwareInfo struct {
 	Id          int64
+	Uuid        string
 	RepoName    string
 	CommitId    string
 	Boards      []string // not presented in firmwares table
@@ -43,6 +44,7 @@ func (db *DB) createTables() error {
 	_, err := db.Exec(`
 	CREATE TABLE IF NOT EXISTS firmwares (
 	    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        uuid        TEXT UNIQUE NOT NULL,
 	    repoName    TEXT NOT NULL,
 	    commitId    TEXT NOT NULL,
 	    createdAt   DATETIME NOT NULL,
@@ -78,6 +80,7 @@ func (db *DB) AddFirmwareInfo(info *FirmwareInfo) (*FirmwareInfo, error) {
 
 	stmt, err := db.Prepare(`
     INSERT INTO firmwares (
+        uuid,
         repoName,
         commitId,
         createdAt,
@@ -85,13 +88,14 @@ func (db *DB) AddFirmwareInfo(info *FirmwareInfo) (*FirmwareInfo, error) {
         md5,
         description,
         size
-    ) VALUES (?, ?, ?, ?, ?, ?, ?)`)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
 	if err != nil {
 		return nil, err
 	}
 	defer stmt.Close()
 
 	result, err := stmt.Exec(
+        info.Uuid,
 		info.RepoName,
 		info.CommitId,
 		info.CreatedAt,
@@ -138,6 +142,7 @@ func (db *DB) firmwareInfoFromSqlRows(firmwareRows *sql.Rows) (*FirmwareInfo, er
 	var fi FirmwareInfo
 	if err := firmwareRows.Scan(
 		&fi.Id,
+        &fi.Uuid,
 		&fi.RepoName,
 		&fi.CommitId,
 		&fi.CreatedAt,
@@ -179,6 +184,7 @@ func (db *DB) GetLatestFirmwareInfo(repo string, board string) (*FirmwareInfo, e
 	stmt, err := db.Prepare(`
         SELECT
 	    	firmwares.id,
+	    	firmwares.uuid,
 	    	firmwares.repoName,
 	    	firmwares.commitId,
 	    	firmwares.createdAt,
@@ -210,17 +216,17 @@ func (db *DB) GetLatestFirmwareInfo(repo string, board string) (*FirmwareInfo, e
 	return db.firmwareInfoFromSqlRows(rows)
 }
 
-func (db *DB) GetFirmareInfoById(id int64) (*FirmwareInfo, error) {
+func (db *DB) GetFirmareInfoByUuid(uuid string) (*FirmwareInfo, error) {
 	db.Lock()
 	defer db.Unlock()
 
-	stmt, err := db.Prepare("SELECT * FROM firmwares WHERE id=?")
+	stmt, err := db.Prepare("SELECT * FROM firmwares WHERE uuid=?")
 	if err != nil {
 		return nil, err
 	}
 	defer stmt.Close()
 
-	rows, err := stmt.Query(id)
+	rows, err := stmt.Query(uuid)
 	if err != nil {
 		return nil, err
 	}

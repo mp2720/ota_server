@@ -10,12 +10,12 @@ type BinariesService struct {
 	cfg *Config
 }
 
-func (svc *BinariesService) GetFirmwareBinaryPath(firmware_id int64) string {
-	return filepath.Join(svc.cfg.storagePath, fmt.Sprintf("%d.bin", firmware_id))
+func (svc *BinariesService) GetFirmwareBinaryPath(uuid string) string {
+	return filepath.Join(svc.cfg.storagePath, fmt.Sprintf("%s.bin", uuid))
 }
 
-func (svc *BinariesService) AddFirmwareBinary(firmware_id int64, bytes []byte) error {
-	f, err := os.Create(svc.GetFirmwareBinaryPath(firmware_id))
+func (svc *BinariesService) AddFirmwareBinary(uuid string, bytes []byte) error {
+	f, err := os.Create(svc.GetFirmwareBinaryPath(uuid))
 	if err != nil {
 		return err
 	}
