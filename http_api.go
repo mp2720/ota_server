@@ -40,7 +40,7 @@ type ApiFirmwareInfoResponse struct {
 	CommitId    string   `json:"commit_id"`
 	Boards      []string `json:"boards"`
 	CreatedAt   int64    `json:"created_at"`
-	LoadedBy    string   `json:"loaded_by"`
+	CreatedBy   string   `json:"created_by"`
 	Md5         string   `json:"md5"`
 	Description string   `json:"description"`
 	Size        int      `json:"size"`
@@ -78,7 +78,7 @@ func (api *Api) newFirmwareResponse(info *FirmwareInfo) ApiFirmwareResponse {
 			info.CommitId,
 			info.Boards,
 			info.CreatedAt.Unix(),
-			info.LoadedBy,
+			info.CreatedBy,
 			info.Md5,
 			info.Description,
 			info.Size,
@@ -207,7 +207,7 @@ func (api *Api) addFirmware(c *gin.Context) {
 		CommitId:    json.CommitId,
 		Boards:      json.Boards,
 		CreatedAt:   time.Now(),
-		LoadedBy:    subject.name,
+		CreatedBy:   subject.name,
 		Description: json.Description,
 	}
 
@@ -326,10 +326,10 @@ func (api *Api) addFirmwareBinary(c *gin.Context) {
 
 	fh, err := c.FormFile("file")
 	if err != nil {
-        c.JSON(http.StatusBadRequest, HttpError{
-            http.StatusBadRequest,
-            err.Error(),
-        })
+		c.JSON(http.StatusBadRequest, HttpError{
+			http.StatusBadRequest,
+			err.Error(),
+		})
 	}
 
 	if fh.Size == 0 {

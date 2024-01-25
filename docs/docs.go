@@ -316,14 +316,14 @@ const docTemplate = `{
                 "created_at": {
                     "type": "integer"
                 },
+                "created_by": {
+                    "type": "string"
+                },
                 "description": {
                     "type": "string"
                 },
                 "id": {
                     "type": "integer"
-                },
-                "loaded_by": {
-                    "type": "string"
                 },
                 "md5": {
                     "type": "string"
