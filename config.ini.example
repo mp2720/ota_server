@@ -9,3 +9,7 @@ port=:8080
 signingKey=<PLACE ACTUAL SECRET KEY HERE!!!>
 issuer=ota-server
 
+[tls]
+pem=./tls/ota_server.pem
+key=./tls/ota_server.key
+

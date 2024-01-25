@@ -45,6 +45,16 @@ go build
 ./ota_server token %BOARDNAME% -b
 ```
 
+## TLS
+В конфиге должны быть указаны пути к .pem и .key файлам (в примере это `./tls/ota_server.key|pem`)
+
+Сгенерировать можно так:
+```bash
+openssl req -newkey rsa:4096 -x509 -sha256 -days 3650 -nodes -out tls/ota_server.crt -keyout tls/ota_server.key
+openssl x509 -in tls/ota_server.crt -out tls/ota_server.pem -outform PEM
+rm tls/ota_server.crt
+```
+
 # Swag
 ```bash
 swag init -g http_api.go

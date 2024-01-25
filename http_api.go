@@ -381,5 +381,5 @@ func (api *Api) StartServer() error {
 		v1.GET("/users/me", api.getAuthenticatedUser)
 	}
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	return r.Run(api.cfg.port)
+	return r.RunTLS(api.cfg.port, api.cfg.tlsPem, api.cfg.tlsKey)
 }
