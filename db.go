@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	_ "github.com/mattn/go-sqlite3"
 	"path/filepath"
+	"sync"
 	"time"
 )
 
@@ -30,17 +31,21 @@ type FirmwareForBoardRecord struct {
 
 type DB struct {
 	*sql.DB
+	sync.Mutex
 }
 
 const SQLITE_DB_FILENAME = "firmware.db"
 
 func (db *DB) createTables() error {
+    db.Lock()
+    defer db.Unlock()
+
 	_, err := db.Exec(`
 	CREATE TABLE IF NOT EXISTS firmwares (
 	    id          INTEGER PRIMARY KEY AUTOINCREMENT,
 	    repoName    TEXT NOT NULL,
 	    commitId    TEXT NOT NULL,
-	    builtAt     DATETIME NOT NULL,
+	    createdAt   DATETIME NOT NULL,
 	    loadedBy    TEXT NOT NULL,
         md5         TEXT NOT NULL,
         description TEXT NOT NULL,
@@ -61,19 +66,22 @@ func NewDB(cfg *Config) (*DB, error) {
 		return nil, err
 	}
 
-	db := &DB{_db}
+	db := &DB{_db, sync.Mutex{}}
 	err = db.createTables()
 
 	return db, err
 }
 
 func (db *DB) AddFirmwareInfo(info *FirmwareInfo) (*FirmwareInfo, error) {
+    db.Lock()
+    defer db.Unlock()
+
 	stmt, err := db.Prepare(`
     INSERT INTO firmwares (
         repoName,
         commitId,
         builtAt,
-        loadedBy,
+        createdAt,
         md5,
         description,
         size
@@ -102,7 +110,6 @@ func (db *DB) AddFirmwareInfo(info *FirmwareInfo) (*FirmwareInfo, error) {
 		return nil, err
 	}
 
-	// TODO: if firmware was added, but adding boards failed?
 	stmt2, err := db.Prepare(`
     INSERT INTO boards (
         boardName,
@@ -166,12 +173,15 @@ func (db *DB) firmwareInfoFromSqlRows(firmwareRows *sql.Rows) (*FirmwareInfo, er
 }
 
 func (db *DB) GetLatestFirmwareInfo(repo string, board string) (*FirmwareInfo, error) {
+    db.Lock()
+    defer db.Unlock()
+
 	stmt, err := db.Prepare(`
         SELECT
 	    	firmwares.id,
 	    	firmwares.repoName,
 	    	firmwares.commitId,
-	    	firmwares.builtAt,
+	    	firmwares.createdAt,
 	    	firmwares.loadedBy,
 	    	firmwares.md5,
 	    	firmwares.description,
@@ -201,6 +211,9 @@ func (db *DB) GetLatestFirmwareInfo(repo string, board string) (*FirmwareInfo, e
 }
 
 func (db *DB) GetFirmareInfoById(id int64) (*FirmwareInfo, error) {
+    db.Lock()
+    defer db.Unlock()
+
 	stmt, err := db.Prepare("SELECT * FROM firmwares WHERE id=?")
 	if err != nil {
 		return nil, err
@@ -221,6 +234,9 @@ func (db *DB) GetFirmareInfoById(id int64) (*FirmwareInfo, error) {
 }
 
 func (db *DB) GetAllFirmwaresInfo() ([]FirmwareInfo, error) {
+    db.Lock()
+    defer db.Unlock()
+
 	stmt, err := db.Prepare("SELECT * FROM firmwares;")
 	if err != nil {
 		return nil, err
@@ -246,6 +262,9 @@ func (db *DB) GetAllFirmwaresInfo() ([]FirmwareInfo, error) {
 }
 
 func (db *DB) UpdateFirmwareFileInfo(fi *FirmwareInfo) error {
+    db.Lock()
+    defer db.Unlock()
+
 	stmt, err := db.Prepare(`
     UPDATE firmwares
     SET
