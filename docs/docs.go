@@ -53,6 +53,66 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Upload firmware binary file. Only for non-board users",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Upload firmware binary file",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "firmware's ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "firmware binary file",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "File is already uploaded/empty file provided/invalid id",
+                        "schema": {
+                            "$ref": "#/definitions/main.HttpError"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid auth token",
+                        "schema": {
+                            "$ref": "#/definitions/main.HttpError"
+                        }
+                    },
+                    "403": {
+                        "description": "Access denied",
+                        "schema": {
+                            "$ref": "#/definitions/main.HttpError"
+                        }
+                    },
+                    "404": {
+                        "description": "Firmware not found",
+                        "schema": {
+                            "$ref": "#/definitions/main.HttpError"
+                        }
+                    }
+                }
             }
         },
         "/firmwares": {
@@ -97,22 +157,22 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Get all firmwares. Only for non-board users",
+                "description": "Create firmare record in db. Upload file to POST /bin/{id} after. Only for non-board users",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Add firmware information and binary",
+                "summary": "Create firmware record in db",
                 "parameters": [
                     {
-                        "description": "firmware info and binary",
+                        "description": "firmware info",
                         "name": "firmware",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/main.ApiAddFirmwareRequest"
+                            "$ref": "#/definitions/main.ApiAddFirmwareInfoRequest"
                         }
                     }
                 ],
@@ -220,7 +280,6 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "boards",
-                "built_at",
                 "repo_name"
             ],
             "properties": {
@@ -231,35 +290,14 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
-                "built_at": {
-                    "type": "integer"
-                },
                 "commit_id": {
                     "type": "string"
                 },
                 "description": {
                     "type": "string"
                 },
-                "md5": {
-                    "type": "string"
-                },
                 "repo_name": {
                     "type": "string"
-                }
-            }
-        },
-        "main.ApiAddFirmwareRequest": {
-            "type": "object",
-            "required": [
-                "bin_base64",
-                "info"
-            ],
-            "properties": {
-                "bin_base64": {
-                    "type": "string"
-                },
-                "info": {
-                    "$ref": "#/definitions/main.ApiAddFirmwareInfoRequest"
                 }
             }
         },
@@ -272,19 +310,16 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
-                "built_at": {
-                    "type": "integer"
-                },
                 "commit_id": {
                     "type": "string"
+                },
+                "created_at": {
+                    "type": "integer"
                 },
                 "description": {
                     "type": "string"
                 },
                 "id": {
-                    "type": "integer"
-                },
-                "loaded_at": {
                     "type": "integer"
                 },
                 "loaded_by": {

@@ -7,30 +7,15 @@ definitions:
           type: string
         minItems: 1
         type: array
-      built_at:
-        type: integer
       commit_id:
         type: string
       description:
-        type: string
-      md5:
         type: string
       repo_name:
         type: string
     required:
     - boards
-    - built_at
     - repo_name
-    type: object
-  main.ApiAddFirmwareRequest:
-    properties:
-      bin_base64:
-        type: string
-      info:
-        $ref: '#/definitions/main.ApiAddFirmwareInfoRequest'
-    required:
-    - bin_base64
-    - info
     type: object
   main.ApiFirmwareInfoResponse:
     properties:
@@ -38,15 +23,13 @@ definitions:
         items:
           type: string
         type: array
-      built_at:
-        type: integer
       commit_id:
         type: string
+      created_at:
+        type: integer
       description:
         type: string
       id:
-        type: integer
-      loaded_at:
         type: integer
       loaded_by:
         type: string
@@ -110,6 +93,45 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Get binary file
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload firmware binary file. Only for non-board users
+      parameters:
+      - description: firmware's ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: firmware binary file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: File is already uploaded/empty file provided/invalid id
+          schema:
+            $ref: '#/definitions/main.HttpError'
+        "401":
+          description: Invalid auth token
+          schema:
+            $ref: '#/definitions/main.HttpError'
+        "403":
+          description: Access denied
+          schema:
+            $ref: '#/definitions/main.HttpError'
+        "404":
+          description: Firmware not found
+          schema:
+            $ref: '#/definitions/main.HttpError'
+      security:
+      - ApiKeyAuth: []
+      summary: Upload firmware binary file
   /firmwares:
     get:
       description: Get all firmwares. Only for non-board users
@@ -136,14 +158,15 @@ paths:
     post:
       consumes:
       - application/json
-      description: Get all firmwares. Only for non-board users
+      description: Create firmare record in db. Upload file to POST /bin/{id} after.
+        Only for non-board users
       parameters:
-      - description: firmware info and binary
+      - description: firmware info
         in: body
         name: firmware
         required: true
         schema:
-          $ref: '#/definitions/main.ApiAddFirmwareRequest'
+          $ref: '#/definitions/main.ApiAddFirmwareInfoRequest'
       produces:
       - application/json
       responses:
@@ -161,7 +184,7 @@ paths:
             $ref: '#/definitions/main.HttpError'
       security:
       - ApiKeyAuth: []
-      summary: Add firmware information and binary
+      summary: Create firmware record in db
   /firmwares/latest:
     get:
       description: Get latest firmware version for given repo and tags. Only for boards

@@ -12,12 +12,15 @@ type FirmwareInfo struct {
 	RepoName    string
 	CommitId    string
 	Boards      []string // not presented in firmwares table
-	BuiltAt     time.Time
-	LoadedAt    time.Time
+	CreatedAt   time.Time
 	LoadedBy    string
 	Md5         string
 	Description string
-	Size        int
+	Size        int // 0 if no binary file uploaded, empty files are not allowed
+}
+
+func (fi *FirmwareInfo) hasBin() bool {
+	return fi.Size != 0
 }
 
 type FirmwareForBoardRecord struct {
@@ -38,7 +41,6 @@ func (db *DB) createTables() error {
 	    repoName    TEXT NOT NULL,
 	    commitId    TEXT NOT NULL,
 	    builtAt     DATETIME NOT NULL,
-	    loadedAt    DATETIME NOT NULL,
 	    loadedBy    TEXT NOT NULL,
         md5         TEXT NOT NULL,
         description TEXT NOT NULL,
@@ -71,12 +73,11 @@ func (db *DB) AddFirmwareInfo(info *FirmwareInfo) (*FirmwareInfo, error) {
         repoName,
         commitId,
         builtAt,
-        loadedAt,
         loadedBy,
         md5,
         description,
         size
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)`)
 	if err != nil {
 		return nil, err
 	}
@@ -85,8 +86,7 @@ func (db *DB) AddFirmwareInfo(info *FirmwareInfo) (*FirmwareInfo, error) {
 	result, err := stmt.Exec(
 		info.RepoName,
 		info.CommitId,
-		info.BuiltAt,
-		info.LoadedAt,
+		info.CreatedAt,
 		info.LoadedBy,
 		info.Md5,
 		info.Description,
@@ -133,8 +133,7 @@ func (db *DB) firmwareInfoFromSqlRows(firmwareRows *sql.Rows) (*FirmwareInfo, er
 		&fi.Id,
 		&fi.RepoName,
 		&fi.CommitId,
-		&fi.BuiltAt,
-		&fi.LoadedAt,
+		&fi.CreatedAt,
 		&fi.LoadedBy,
 		&fi.Md5,
 		&fi.Description,
@@ -173,7 +172,6 @@ func (db *DB) GetLatestFirmwareInfo(repo string, board string) (*FirmwareInfo, e
 	    	firmwares.repoName,
 	    	firmwares.commitId,
 	    	firmwares.builtAt,
-	    	firmwares.loadedAt,
 	    	firmwares.loadedBy,
 	    	firmwares.md5,
 	    	firmwares.description,
@@ -182,6 +180,7 @@ func (db *DB) GetLatestFirmwareInfo(repo string, board string) (*FirmwareInfo, e
         WHERE
             firmwares.repoName = ?
             AND boards.boardName = ?
+            AND firmwares.size != 0
         ORDER BY firmwares.builtAt DESC LIMIT 1;`)
 	if err != nil {
 		return nil, err
@@ -244,4 +243,25 @@ func (db *DB) GetAllFirmwaresInfo() ([]FirmwareInfo, error) {
 	}
 
 	return fis, nil
+}
+
+func (db *DB) UpdateFirmwareFileInfo(fi *FirmwareInfo) error {
+	stmt, err := db.Prepare(`
+    UPDATE firmwares
+    SET
+        md5 = ?,
+        size = ?
+    WHERE firmwares.id = ?
+    `)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(
+		fi.Md5,
+		fi.Size,
+		fi.Id,
+	)
+	return err
 }
