@@ -1,54 +1,53 @@
 # OTA Server
-Сервер контроля версий прошивок для OTA (Over The Air) обновлений.
+A firmware version control server for OTA (Over The Air) updates.
 
-Компиляция:
+Build:
 ```bash
 go build
 ```
 
-Конфигурация должна находиться в файле `config.ini`, пример есть в `config.ini.example`.
+Configuration must be located in the `config.ini` file; an example is provided in `config.ini.example`.
 
-Запуск сервера:
+Start the server:
 ```bash
 ./ota_server
 ```
 
-Сервер сохраняет данные в папку, указанную в конфиге.
-В этой папке хранится sqlite база данных с информацией о каждой версии и файлы прошивок.
+The server stores data in the folder specified in the config.
+This folder contains the sqlite database with information about each version and the firmware files.
 
 ## API
-По адресу `/swagger/index.html` можно найти документацию к API.
+API documentation can be found at `/swagger/index.html`.
 
-Разработчики могут загружать новые версии прошивки.
-Дополнительная информация, которую необходимо предоставить для каждой прошивке включает в себя:
-* время сборки
-* номер коммита в гите (необязательно)
-* название репозитория 
-* список названий плат, на которые может быть загружена прошивка
-* описание (может быть пустым)
+Developers can upload new firmware versions.
+Additional information required for each firmware includes:
+* build time
+* git commit hash (optional)
+* repository name
+* list of board names the firmware can be uploaded to
+* description (can be empty)
 
-Платы могут запрашивать последнюю версию прошивки, при этом должно быть предоставлено имя
-репозитория.
+Boards can request the latest firmware version, providing the repository name.
 
-## Безопасность
-Для использование HTTP API нужно сгенерировать JWT токены.
-Они содержат имя субъекта, на которого подписывается токен, и его тип (разработчик/плата).
-Секретный ключ должен быть указан в конфигурации.
+## Security
+To use the HTTP API, you need to generate JWT tokens.
+They contain the subject name for whom the token is issued and its type (developer/board).
+The secret key must be specified in the configuration.
 
-Токен для разработчика (даёт доступ к: загрузке прошивок на сервер, просмотру всех прошивок):
+Token for a developer (grants access to: uploading firmware to the server, viewing all firmware):
 ```
 ./ota_server token %USERNAME%
 ```
 
-Токен для платы (даёт доступ только к получению последней версии прошивки):
+Token for a board (grants access only to getting the latest firmware version):
 ```
 ./ota_server token %BOARDNAME% -b
 ```
 
 ## TLS
-В конфиге должны быть указаны пути к .pem и .key файлам (в примере это `./tls/ota_server.key|pem`)
+The config must specify the paths to the .pem and .key files (in the example, these are `./tls/ota_server.key|pem`)
 
-Сгенерировать можно так:
+You can generate them like this:
 ```bash
 openssl req -newkey rsa:4096 -x509 -sha256 -days 3650 -nodes -out tls/ota_server.crt -keyout tls/ota_server.key
 openssl x509 -in tls/ota_server.crt -out tls/ota_server.pem -outform PEM
